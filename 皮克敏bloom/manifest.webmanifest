@@ -1,0 +1,20 @@
+{
+  "name": "光合作用 · 植物伙伴",
+  "short_name": "光合作用",
+  "description": "领养一株虚拟植物，出门拍摄自然获取光合值，和植物一起生长。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6efe5",
+  "theme_color": "#79c488",
+  "categories": ["health", "lifestyle", "games"],
+  "icons": [
+    { "src": "app_assets/icons/pwa_192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "app_assets/icons/pwa_512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "app_assets/icons/maskable_192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "app_assets/icons/maskable_512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

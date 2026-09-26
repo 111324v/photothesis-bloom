@@ -1,0 +1,52 @@
+name: Build iOS (Cloud macOS)
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Capacitor dependencies
+        working-directory: ios-app
+        run: npm install
+
+      - name: Sync web prototype into www
+        shell: pwsh
+        working-directory: ios-app
+        run: ./scripts/sync-web.ps1
+
+      - name: Copy web into Xcode project
+        working-directory: ios-app
+        run: npx cap copy ios
+
+      - name: Install CocoaPods
+        working-directory: ios-app/ios/App
+        run: pod install
+
+      - name: Build for iOS Simulator (deployment target iOS 13, compatible with iPhone 7)
+        working-directory: ios-app/ios/App
+        run: |
+          xcodebuild \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            clean build
+
+      - name: Upload simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: BloomSimulatorApp
+          path: ios-app/ios/App/build/Build/Products/Debug-iphonesimulator/App.app
+          if-no-files-found: error

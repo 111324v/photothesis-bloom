@@ -1,0 +1,10 @@
+{
+  "appId": "com.photothesis.bloom",
+  "appName": "光合作用",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#f6efe5",
+    "scheme": "光合作用"
+  }
+}

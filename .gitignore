@@ -1,0 +1,33 @@
+# 依赖与构建产物
+node_modules/
+www/
+*.log
+.DS_Store
+
+# 原型目录中不属于 Web 交付的内容
+皮克敏bloom/*.md
+皮克敏bloom/*.blend
+皮克敏bloom/*.glb
+皮克敏bloom/_check/
+皮克敏bloom/_design/
+皮克敏bloom/参考图/
+皮克敏bloom/植物素材/
+皮克敏bloom/.playwright-cli/
+
+# 未被 index.html 引用的素材（本地保留，仅不进入交付仓库）
+皮克敏bloom/app_assets/Strawberry_*.png
+皮克敏bloom/app_assets/cutout/
+皮克敏bloom/app_assets/pot_*.glb
+皮克敏bloom/app_assets/pots/
+皮克敏bloom/app_assets/stamp_postcard.svg
+皮克敏bloom/app_assets/云朵*.png
+皮克敏bloom/app_assets/3.1 返回.svg
+皮克敏bloom/app_assets/手势.svg
+皮克敏bloom/app_assets/草地.svg
+皮克敏bloom/app_assets/生成花盆3D渲染图*.png
+皮克敏bloom/app_assets/面性叶子形钻石水晶.svg
+
+# iOS 构建中间产物
+ios-app/www/
+ios-app/ios/App/build/
+ios-app/ios/App/Pods/
