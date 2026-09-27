@@ -666,7 +666,7 @@ body.in-standalone .status{display:none!important}
 .coll-hero .ch-lbl{font-size:var(--fs-xs);color:rgba(12,51,24,.68);font-weight:var(--fw-semibold)}
 
 /* 主页顶部植物 tab：切换当前展示植物（最多 3 个） */
-.plant-tabs{position:relative;z-index:26;display:flex;gap:var(--sp-2);justify-content:center;margin-top:var(--sp-3);flex-wrap:wrap}
+.plant-tabs{position:relative;z-index:26;display:flex;gap:var(--sp-2);justify-content:flex-start;margin-top:var(--sp-3);flex-wrap:wrap;padding-left:var(--sp-4);padding-right:var(--sp-4);align-items:center}
 .pt{display:flex;align-items:center;gap:var(--sp-1);padding:3px var(--sp-3) 3px 3px;border-radius:var(--r-full);border:2px solid transparent;background:rgba(255,255,255,.55);cursor:pointer;color:var(--glass-txt-strong);box-shadow:0 3px 10px rgba(0,0,0,.08)}
 .pt-ic{width:26px;height:26px;border-radius:var(--r-round);background:#fff;display:grid;place-items:center;overflow:hidden;box-shadow:0 2px 5px rgba(0,0,0,.1)}
 .pt-ic img{width:100%;height:100%;object-fit:contain}
@@ -2181,6 +2181,8 @@ html, body {
 
 .cam-fab{touch-action:none!important;user-select:none!important;-webkit-user-select:none!important;cursor:grab!important}
 .cam-fab.dragging{cursor:grabbing!important;transition:none!important}
+
+#s-home .plant-tabs{justify-content:flex-start!important;padding-left:var(--sp-4)!important;padding-right:var(--sp-4)!important;align-items:center!important}
 </style>
 </head>
 <body>
