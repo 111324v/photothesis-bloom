@@ -1805,14 +1805,45 @@ input[type=file]{display:none}
   #s-home .home-hd{padding-top:calc(env(safe-area-inset-top,0px) + 12px)!important}
 }
 
-/* v666：更换花盆常驻入口 —— 图鉴打开时底部固定操作条，始终可点 */
-#s-collection .body{padding-bottom:88px}
+/* v668：更换花盆跟在花盆素材下方，随内容滚动出现，不吸底 */
+#s-collection .body{padding-bottom:24px}
 .pot-change-bar{
-  position:fixed;left:16px;right:16px;bottom:18px;z-index:40;display:none;
+  position:static;display:block;width:100%;
+  margin:12px 0 4px;
 }
-#s-collection.on .pot-change-bar{display:block}
 .pot-change-bar .btn{
-  width:100%;box-shadow:0 10px 28px rgba(40,100,60,.28);
+  width:100%;box-shadow:0 8px 22px rgba(40,100,60,.2);
+}
+
+/* v667：挑花盆/选植物标题不被裁顶；图文完整 */
+#s-pot .choose-hd,
+#s-choose .choose-hd{
+  padding-top:calc(env(safe-area-inset-top,0px) + 28px)!important;
+  padding-left:var(--sp-5)!important;
+  padding-right:var(--sp-5)!important;
+  overflow:visible!important;
+}
+#s-pot .choose-h1,
+#s-choose .choose-h1{
+  overflow:visible!important;
+  line-height:1.2!important;
+  padding-top:2px;
+  margin-top:0;
+}
+#s-pot .choose-h1 b,
+#s-choose .choose-h1 b{display:block;overflow:visible!important;line-height:1.2!important}
+#s-pot .choose-quote,
+#s-choose .choose-quote{
+  padding-top:calc(var(--sp-4) + 4px)!important;
+  overflow:visible!important;
+  white-space:normal!important;
+  line-height:1.55!important;
+}
+@media (max-width:414px){
+  #s-pot .choose-hd,
+  #s-choose .choose-hd{
+    padding-top:calc(env(safe-area-inset-top,0px) + 22px)!important;
+  }
 }
 </style>
 </head>
@@ -1827,7 +1858,7 @@ input[type=file]{display:none}
     <div class="choose-bg"></div>
     <div class="choose-ground" aria-hidden="true"></div>
     <div class="choose-cloud"></div>
-    <div class="status" style="color:var(--ink)"><span>9:41</span><span></span><div>100%</div></div>
+    <!-- status hidden on device -->
     <div class="choose-hd"><div class="choose-h1">挑一位<b>植物搭子</b></div></div>
     <div class="choose-quote">你朝光走一步，我就悄悄长高一节。</div>
     <div class="choose-carousel" id="car"><div class="choose-track" id="track"></div></div>
@@ -1898,7 +1929,7 @@ input[type=file]{display:none}
       <use href="#grA" x="238" y="61"/><use href="#grB" x="264" y="62"/><use href="#flP" x="286" y="57"/>
       <use href="#grB" x="312" y="60"/><use href="#grA" x="338" y="61"/><use href="#flW" x="364" y="57"/>
     </svg></div>
-    <div class="status"><span>9:41</span><div>光合作用 · 100%</div></div>
+    <!-- status hidden on device -->
     <div class="home-hd">
       <div class="top-right">
         <div class="avatar-btn" onclick="openSub('s-profile')">
@@ -2017,7 +2048,7 @@ input[type=file]{display:none}
   <!-- 选花盘 -->
   <section class="screen" id="s-pot">
     <div class="choose-bg"></div>
-    <div class="status" style="color:var(--ink)"><span>9:41</span><span></span><div>100%</div></div>
+    <!-- status hidden on device -->
     <div class="choose-hd"><div class="choose-h1">挑个<b>花盘</b></div></div>
     <div class="choose-quote">给 <span id="potPlant">伙伴</span> 挑一个舒服的小家</div>
     <div class="pot-wrap"><div class="pot-grid" id="potGrid"></div></div>
@@ -2881,7 +2912,7 @@ function renderPots(){
   $('potGrid').innerHTML=list.map(p=>{
     const locked=potLocked(p), on=p.id===cur;
     return `<div class="pot-card ${on?'on':''} ${locked?'lock':''}" onclick="selectPot('${p.id}')">
-      <div class="pot-ico"><img src="app_assets/${p.img}" alt="${p.name}" onerror="this.replaceWith(document.createRange().createContextualFragment(potSvg('${p.id}')))"></div>
+      <div class="pot-ico"><img src="app_assets/${encodeURIComponent(p.img).replace(/%2F/g,'/')}" alt="${p.name}" onerror="this.replaceWith(document.createRange().createContextualFragment(potSvg('${p.id}')))"></div>
       <div class="pot-name">${p.name}</div>
       ${locked?`<div class="lock-mask">累计 ${p.unlock*15} 光合解锁</div>`:''}
     </div>`;
