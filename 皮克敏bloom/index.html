@@ -550,7 +550,7 @@ body.in-standalone .status{display:none!important}
 .pot-card.lock{filter:grayscale(.8);opacity:.7}
 .lock-mask{position:absolute;inset:0;display:grid;place-items:center;border-radius:17px;background:rgba(255,255,255,.62);font-size:12px;font-weight:800;color:#5a6b5f}
 /* 主页植物底部花盘层 */
-.pot-layer{display:none;position:absolute;left:50%;bottom:118px;transform:translateX(-50%);width:160px;height:130px;z-index:9;pointer-events:none}
+.pot-layer{display:block;position:absolute;left:50%;bottom:118px;transform:translateX(-50%);width:160px;height:130px;z-index:9;pointer-events:none}
 .pot-layer svg{width:100%;height:100%;filter:drop-shadow(0 8px 14px rgba(0,0,0,.22))}
 /* 图鉴内花盘预览：改用花盆 3D 渲染图 */
 .pot-mini{width:96px;height:80px;margin:2px 0;display:grid;place-items:center}
@@ -2253,6 +2253,9 @@ body.in-standalone .phone {
   border-radius: 0 !important;
   box-shadow: none !important;
 }
+
+.pot-layer{display:block!important;z-index:9}
+.pot-layer svg{width:100%;height:100%}
 </style>
 </head>
 <body>
@@ -3500,7 +3503,7 @@ function selectPot(id){
 }
 function closePot(){ if(potMode==='onboard') show('s-choose'); else { show('s-home'); openSub('s-collection'); } }
 /* 主页底部花盘渲染（占位 SVG，后续可替换为真实花盘 3D/贴图） */
-function renderPot(){const el=$('potLayer');if(el)el.innerHTML='';if(window.setPot3D)window.setPot3D(S.pot);}
+function renderPot(){const el=$('potLayer');if(el){try{el.innerHTML=potSvg(S.pot||'terracotta')}catch(e){}}if(window.setPot3D)window.setPot3D(S.pot);}
 /* ---------- 环境系统：白天/傍晚/夜晚随真实时间；雨/雪由拍照识别，仅保留一天 ---------- */
 const todayKey=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
 function envPhase(){const h=new Date().getHours()+new Date().getMinutes()/60;
