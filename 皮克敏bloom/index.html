@@ -198,7 +198,29 @@ html.is-fullscreen .fs-entry{display:none!important}
 html.is-fullscreen .chrome,html.is-fullscreen .notch{display:none!important}
 html.is-fullscreen body{padding:0;gap:0;justify-content:stretch;background:#000;overflow:hidden}
 html.is-fullscreen .phone{width:100vw;height:100vh;height:var(--app-h,100dvh);border-radius:0;box-shadow:none}
-body{overscroll-behavior:none;-webkit-user-select:none;user-select:none;margin:0;min-height:100dvh}
+body{overscroll-behavior:none;-webkit-user-select:none;user-select:none;margin:0;min-height:100dvh;height:100vh;height:var(--app-h,100dvh)}
+/* iPhone X/XS 类：内容避开刘海与 Home 指示条 */
+@media (max-width:480px){
+  .screens, .phone{padding-top:env(safe-area-inset-top,0px)}
+  .choose-hd,.home-hd,.sub-hd{padding-top:calc(var(--sp-4) + env(safe-area-inset-top,0px))}
+  .status{display:none!important}
+}
+/* XS 画幅（375×812）：标题与卡片不挤、底部不裁切 */
+@media (max-width:414px){
+  .choose-h1{font-size:clamp(28px,8vw,36px)}
+  .choose-quote{padding-top:calc(var(--sp-6) + 8px);padding-left:var(--sp-4);padding-right:var(--sp-4);white-space:normal}
+  .choose-card{width:min(270px,78vw)}
+  .home-foot{bottom:calc(168px + env(safe-area-inset-bottom,0px))}
+  .act-row{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .dock{padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+  .cam-fab{width:54px;height:54px;bottom:calc(100% + 8px)}
+}
+/* 矮屏（Safari 底栏） */
+@media (max-height:720px){
+  .home-foot{bottom:calc(150px + env(safe-area-inset-bottom,0px));padding:var(--sp-2) var(--sp-3)}
+  .act-row{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+  .choose-quote{display:none}
+}
 .notch{position:absolute;top:var(--sp-3);left:50%;transform:translateX(-50%);width:12px;height:12px;background:var(--notch);border-radius:var(--r-round);z-index:120}
 .screens{position:absolute;inset:0;overflow:hidden}
 .screen{position:absolute;inset:0;display:none}
@@ -302,7 +324,12 @@ body{overscroll-behavior:none;-webkit-user-select:none;user-select:none;margin:0
   background:#152548}
 #s-home.env-night .px-moon{display:block}
 
+/* 假状态栏：仅桌面演示；真机/主屏/全屏隐藏，避免与 iOS 系统状态栏重叠 */
 .status{display:flex;justify-content:space-between;padding:var(--sp-4) 22px var(--sp-1);font-size:var(--fs-base);font-weight:var(--fw-semibold);color:var(--c-on-dark);z-index:30;position:relative;text-shadow:0 1px 2px rgba(0,0,0,.15)}
+@media (max-width:480px){.status{display:none!important}}
+@media (display-mode:standalone),(display-mode:fullscreen){.status{display:none!important}}
+html.is-fullscreen .status{display:none!important}
+body.in-standalone .status{display:none!important}
 .home-hd{position:relative;z-index:25;padding:var(--sp-1) var(--sp-6) 0;display:flex;justify-content:space-between;align-items:flex-start}
 .home-title{font-family:var(--font-disp);font-size:var(--fs-7xl);font-weight:var(--fw-black);color:var(--sun-200);line-height:1;letter-spacing:-.5px;text-shadow:0 2px 0 rgba(0,0,0,.08)}
 .home-sub{font-family:var(--font-disp);font-size:var(--fs-base);font-weight:var(--fw-bold);letter-spacing:5px;color:var(--ink-forest);text-transform:uppercase;margin-top:var(--sp-1)}
@@ -516,7 +543,7 @@ body{overscroll-behavior:none;-webkit-user-select:none;user-select:none;margin:0
 .pot-card.on{border-color:var(--sun-400);box-shadow:0 10px 22px rgba(255,190,100,.25),0 0 0 3px rgba(255,206,120,.35)}
 .pot-card:active{transform:scale(.97)}
 .pot-ico{width:64px;height:64px}
-.pot-ico img{width:100%;height:100%;object-fit:contain}
+.pot-ico img,.pot-ico svg{width:100%;height:100%;object-fit:contain;display:block}
 .pot-name{font-size:14px;font-weight:800;color:#1e7a39;text-align:center}
 .pot-rar{font-size:11px;color:#9aa89e;font-style:italic}
 .pot-card.lock{filter:grayscale(.8);opacity:.7}
@@ -2741,7 +2768,7 @@ function renderPots(){
   $('potGrid').innerHTML=list.map(p=>{
     const locked=potLocked(p), on=p.id===cur;
     return `<div class="pot-card ${on?'on':''} ${locked?'lock':''}" onclick="selectPot('${p.id}')">
-      <div class="pot-ico"><img src="app_assets/${p.img}" alt="${p.name}"></div>
+      <div class="pot-ico"><img src="app_assets/${p.img}" alt="${p.name}" onerror="this.replaceWith(document.createRange().createContextualFragment(potSvg('${p.id}')))"></div>
       <div class="pot-name">${p.name}</div>
       ${locked?`<div class="lock-mask">Lv.${p.unlock} 解锁</div>`:''}
     </div>`;
