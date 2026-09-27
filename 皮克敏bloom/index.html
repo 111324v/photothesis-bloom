@@ -546,7 +546,7 @@ body.in-standalone .status{display:none!important}
 .btn-back svg{width:18px;height:18px}
 /* 选花盘页 */
 .pot-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:10px 18px 0;overflow:auto;position:relative;z-index:8}
-.pot-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;width:100%;max-width:388px}
+.pot-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:388px}
 .pot-card{background:var(--paper);border-radius:20px;border:3px solid #f3f7f2;box-shadow:0 10px 24px rgba(120,150,190,.16);padding:14px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;cursor:pointer;transition:transform .15s,border-color .15s}
 .pot-card.on{border-color:var(--sun-400);box-shadow:0 10px 22px rgba(255,190,100,.25),0 0 0 3px rgba(255,206,120,.35)}
 .pot-card:active{transform:scale(.97)}
@@ -832,16 +832,22 @@ input[type=file]{display:none}
   border-radius:999px;padding:2px 12px;backdrop-filter:blur(4px)}
 
 /* —— 伙伴登场卡：倾斜大贴纸 + 名牌 + 徽章，下方垫两页纸张 —— */
-#collHero{position:relative;overflow:hidden;border:none;border-radius:20px;padding:var(--sp-5);max-width:100%;box-sizing:border-box;
-  box-shadow:0 18px 40px rgba(0,0,0,.22);margin-top:var(--sp-3)}
-#collHero .ch-card{max-width:100%;box-sizing:border-box;overflow:hidden}
-#collHero .ch-main{min-width:0;overflow:hidden}
-#collHero .ch-name,#collHero .ch-en,#collHero .ch-stage{white-space:normal;overflow:hidden;overflow-wrap:anywhere;line-height:1.35}
+#collHero{position:relative;overflow-x:auto!important;overflow-y:hidden;
+  scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+  border:none;border-radius:0;padding:22px 0 0;max-width:100%;box-sizing:border-box;
+  box-shadow:none;margin:0;background:transparent}
+#collHero::-webkit-scrollbar{display:none}
+#collHero .ch-track{display:flex;gap:12px}
+#collHero .ch-card{flex:0 0 calc(100% - 4px);scroll-snap-align:center;box-sizing:border-box;min-height:128px}
+#collHero .ch-main{min-width:0;flex:1;overflow:visible}
+#collHero .ch-en{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.4px}
+#collHero .ch-name{white-space:normal;overflow:visible;line-height:1.2;font-size:clamp(20px,5.5vw,28px)}
+#collHero .ch-stage{white-space:normal;overflow:visible;line-height:1.4}
 #collHero::before{content:"";position:absolute;inset:6px 0 -9px 0;z-index:-2;border-radius:20px;
   background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.06));border:1.5px solid rgba(255,255,255,.4)}
 #collHero::after{content:"";position:absolute;inset:0;border-radius:20px;pointer-events:none;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.7), inset 0 -18px 40px rgba(0,0,0,.10)}
-#collHero .ch-ico{width:96px;height:96px;transform:rotate(-6deg);border-radius:26px;border:5px solid #fff;
+#collHero .ch-ico{width:clamp(72px,22vw,96px);height:clamp(72px,22vw,96px);flex-shrink:0;transform:rotate(-6deg);border-radius:26px;border:5px solid #fff;
   box-shadow:0 14px 28px rgba(0,0,0,.22), 0 2px 0 rgba(255,255,255,.6) inset}
 #collHero .ch-ico img{padding:6px}
 #collHero .ch-en{margin:0 0 1px;font-family:var(--font-disp);font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.92);
@@ -853,7 +859,7 @@ input[type=file]{display:none}
 #collHero .ch-bar i::after{content:"";position:absolute;right:-2px;top:-4px;width:16px;height:16px;border-radius:50%;
   background:radial-gradient(circle at 35% 30%,#ffe9a8,#f7a13b);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 #collHero .ch-num{color:rgba(255,255,255,.95);font-weight:700}
-#collHero .ch-side{border-left:1px solid #eef2ee!important;min-width:56px!important;max-width:72px!important;padding-left:8px!important;flex-shrink:0}
+#collHero .ch-side{border-left:1px solid #eef2ee!important;min-width:64px!important;max-width:86px!important;padding-left:10px!important;flex-shrink:0}
 #collHero .ch-cnt b{color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.25)}
 #collHero .ch-cnt span{color:rgba(255,255,255,.85)}
 #collHero .ch-lbl{color:rgba(255,255,255,.92)}
@@ -2145,6 +2151,9 @@ const POTS=[
   {id:'purple',name:'淡紫圆润盆',en:'Amethyst',rare:false,unlock:1,img:'cutout/生成花盆3D渲染图1.png',glb:'pots/pot_purple.glb',color:'#a471cc',desc:'淡紫釉面，圆润又温柔'},
   {id:'blue',name:'浅蓝竖纹盆',en:'Azure',rare:false,unlock:1,img:'cutout/生成花盆3D渲染图2.png',glb:'pots/pot_blue.glb',color:'#4db0cc',desc:'浅蓝竖纹，清爽利落'},
   {id:'green',name:'青绿凸沿盆',en:'Moss',rare:false,unlock:1,img:'cutout/生成花盆3D渲染图3.png',glb:'pots/pot_green.glb',color:'#8fcb99',desc:'青绿凸沿，满满生机'},
+  {id:'gold',name:'鎏金雕花盆',en:'Gilded',rare:true,unlock:5,img:'cutout/生成花盆3D渲染图0.png',glb:'pots/pot_orange.glb',color:'#e8c25a',desc:'稀有金边，贵气十足'},
+  {id:'crystal',name:'星河水晶盆',en:'Crystal',rare:true,unlock:7,img:'cutout/生成花盆3D渲染图2.png',glb:'pots/pot_blue.glb',color:'#9bb8ff',desc:'稀有水晶，盛满星光'},
+  {id:'cloud',name:'云朵绒花盆',en:'Cloud',rare:true,unlock:9,img:'cutout/生成花盆3D渲染图3.png',glb:'pots/pot_green.glb',color:'#dfe6ff',desc:'稀有云绒，软乎乎的可爱'},
 ];
 const POT_OF=id=>POTS.find(p=>p.id===id)||POTS[0];
 const potLocked=p=>p.rare && S.total < p.unlock*15;
@@ -2771,11 +2780,13 @@ function choosePlant(id){
 }
 function openPot(mode){
   potMode=mode;
-  $('potPlant').textContent=spOf(S.species).name;
+  try{ $('potPlant').textContent=spOf(S.species||S.active||'strawberry').name; }catch(e){}
   const hd=document.querySelector('#s-pot .choose-h1');
-  if(hd) hd.innerHTML = mode==='onboard' ? '挑个<b>花盆</b>' : '花盆<b>图鉴</b>';
-  renderPots(); show('s-pot');
+  if(hd) hd.innerHTML = mode==='onboard' ? '挑个<b>花盆</b>' : '更换<b>花盆</b>';
+  renderPots();
+  show('s-pot');
 }
+window.openPot=openPot;
 function renderPots(){
   const cur=POT_OF(S.pot).id;
   /* 首启选盆：只给基础款，不出现带解锁门槛的高级盆；
@@ -2786,7 +2797,7 @@ function renderPots(){
     return `<div class="pot-card ${on?'on':''} ${locked?'lock':''}" onclick="selectPot('${p.id}')">
       <div class="pot-ico"><img src="app_assets/${p.img}" alt="${p.name}" onerror="this.replaceWith(document.createRange().createContextualFragment(potSvg('${p.id}')))"></div>
       <div class="pot-name">${p.name}</div>
-      ${locked?`<div class="lock-mask">Lv.${p.unlock} 解锁</div>`:''}
+      ${locked?`<div class="lock-mask">累计 ${p.unlock*15} 光合解锁</div>`:''}
     </div>`;
   }).join('');
 }
