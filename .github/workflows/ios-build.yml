@@ -20,9 +20,8 @@ jobs:
         run: npm install
 
       - name: Sync web prototype into www
-        shell: pwsh
         working-directory: ios-app
-        run: ./scripts/sync-web.ps1
+        run: node scripts/sync-web.mjs
 
       - name: Copy web into Xcode project
         working-directory: ios-app

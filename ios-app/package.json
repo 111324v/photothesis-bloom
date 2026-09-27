@@ -4,9 +4,9 @@
   "description": "光合作用 - 皮克敏 Bloom 风格植物养成 App",
   "private": true,
   "scripts": {
-    "web:sync": "powershell -ExecutionPolicy Bypass -File scripts/sync-web.ps1",
-    "ios:sync": "powershell -ExecutionPolicy Bypass -File scripts/sync-web.ps1 && cap sync ios",
-    "ios:build": "powershell -ExecutionPolicy Bypass -File scripts/sync-web.ps1 && cap copy ios"
+    "web:sync": "node scripts/sync-web.mjs",
+    "ios:sync": "node scripts/sync-web.mjs && cap sync ios",
+    "ios:build": "node scripts/sync-web.mjs && cap copy ios"
   },
   "dependencies": {
     "@capacitor/core": "^6.2.2",
