@@ -168,6 +168,19 @@ html,body{height:100%;font-family:var(--font-body);background:var(--void);color:
 body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--sp-3);padding:var(--sp-4)}
 .chrome{color:var(--glass-txt);font-size:var(--fs-base);text-align:center;line-height:1.5}
 .phone{width:min(430px,100vw);height:min(932px,100dvh);border-radius:var(--r-2xl);overflow:hidden;position:relative;background:var(--bezel);box-shadow:0 0 0 3px var(--bezel-edge),0 30px 90px rgba(0,0,0,.55)}
+/* 浏览器内全屏入口：手机上也可见（主屏/原生启动时自动隐藏） */
+.fs-entry{
+  position:fixed;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:200;
+  display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;
+  padding:9px 13px;border-radius:999px;border:1.5px solid rgba(255,255,255,.55);
+  background:rgba(20,40,28,.72);color:#fff;font-size:12px;font-weight:800;
+  box-shadow:0 8px 22px rgba(0,0,0,.28);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+.fs-entry:active{transform:scale(.96)}
+.fs-entry .dot{width:8px;height:8px;border-radius:50%;background:#7dffa0;box-shadow:0 0 8px #7dffa0}
+body.in-standalone .fs-entry{display:none!important}
+html.is-fullscreen .fs-entry{display:none!important}
+
 /* 真机/窄屏：铺满整个视口 */
 @media (max-width:480px){
   .chrome{display:none!important}
@@ -3561,30 +3574,45 @@ window.__canBox=()=>{
     return window.matchMedia('(display-mode:standalone), (display-mode:fullscreen)').matches
       || window.navigator.standalone === true;
   }
+  if (isStandalone()) document.body.classList.add('in-standalone');
+
   function syncVH(){
     const h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
     document.documentElement.style.setProperty('--app-h', h + 'px');
+    document.documentElement.style.setProperty('--app-w',
+      ((window.visualViewport && window.visualViewport.width) || window.innerWidth) + 'px');
   }
   syncVH();
   window.addEventListener('resize', syncVH);
-  if (window.visualViewport) window.visualViewport.addEventListener('resize', syncVH);
+  window.addEventListener('orientationchange', syncVH);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', syncVH);
+    window.visualViewport.addEventListener('scroll', syncVH);
+  }
+
+  function tip(html){
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;left:50%;bottom:22%;transform:translateX(-50%);z-index:9999;max-width:88%;padding:14px 18px;border-radius:16px;background:rgba(16,32,22,.94);color:#fff;font-size:14px;line-height:1.6;text-align:center;box-shadow:0 14px 36px rgba(0,0,0,.4)';
+    el.innerHTML = html;
+    el.addEventListener('click', ()=>el.remove());
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), 5200);
+    return el;
+  }
 
   window.__enterFullscreen = function(){
+    if (isStandalone()) {
+      tip('已处于全屏 App 模式，无需再全屏');
+      return;
+    }
     const el = document.documentElement;
     const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
     if (req) {
-      Promise.resolve(req.call(el)).then(()=>document.documentElement.classList.add('is-fullscreen')).catch(()=>{});
+      Promise.resolve(req.call(el)).then(()=>document.documentElement.classList.add('is-fullscreen'))
+        .catch(()=>{ tip('浏览器拒绝了全屏。请用 <b>分享 → 添加到主屏</b>'); });
       return;
     }
-    /* iOS Safari 网页无法 JS 全屏 → 引导添加到主屏（可全屏） */
-    if (!isStandalone()) {
-      const tip = document.createElement('div');
-      tip.style.cssText = 'position:fixed;left:50%;bottom:28%;transform:translateX(-50%);z-index:9999;max-width:86%;padding:14px 18px;border-radius:16px;background:rgba(20,32,24,.92);color:#fff;font-size:14px;line-height:1.55;text-align:center;box-shadow:0 12px 32px rgba(0,0,0,.35)';
-      tip.innerHTML = 'Safari 网页无法完全隐藏地址栏。<br><b>点分享按钮 →「添加到主屏」</b><br>再打开即可全屏当 App 用。';
-      document.body.appendChild(tip);
-      tip.addEventListener('click', ()=>tip.remove());
-      setTimeout(()=>tip.remove(), 5000);
-    }
+    tip('iOS Safari 网页无法用脚本全屏。<br>请点底部 <b>分享</b> → <b>添加到主屏</b><br>再从桌面图标打开，即可全屏当 App 用。');
   };
   document.addEventListener('fullscreenchange', ()=>{
     document.documentElement.classList.toggle('is-fullscreen', !!document.fullscreenElement);
@@ -3592,11 +3620,29 @@ window.__canBox=()=>{
   document.addEventListener('webkitfullscreenchange', ()=>{
     document.documentElement.classList.toggle('is-fullscreen', !!document.webkitFullscreenElement);
   });
-  let tried=false;
-  window.addEventListener('pointerdown', function tryFs(){
-    if (tried || isStandalone()) return;
-    if (window.innerWidth <= 480) { tried=true; window.__enterFullscreen(); }
-  }, { once:true });
+
+  /* 手机上常驻「全屏演示」入口，点一次说明/尝试全屏 */
+  function mountEntry(){
+    if (isStandalone() || document.querySelector('.fs-entry')) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'fs-entry';
+    b.innerHTML = '<span class="dot"></span>全屏演示';
+    b.addEventListener('click', function(e){
+      e.preventDefault(); e.stopPropagation();
+      window.__enterFullscreen();
+    });
+    document.body.appendChild(b);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountEntry);
+  else mountEntry();
+
+  /* 首次进入浏览器模式时轻提示（不打断操作） */
+  setTimeout(function(){
+    if (!isStandalone() && window.innerWidth <= 480) {
+      tip('提示：点右上角 <b>全屏演示</b><br>或 <b>分享 → 添加到主屏</b> 去掉浏览器框');
+    }
+  }, 1400);
 })();
 </script>
 </body>
