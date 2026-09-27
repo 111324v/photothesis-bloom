@@ -1804,6 +1804,16 @@ input[type=file]{display:none}
 @media (max-width:480px){
   #s-home .home-hd{padding-top:calc(env(safe-area-inset-top,0px) + 12px)!important}
 }
+
+/* v666：更换花盆常驻入口 —— 图鉴打开时底部固定操作条，始终可点 */
+#s-collection .body{padding-bottom:88px}
+.pot-change-bar{
+  position:fixed;left:16px;right:16px;bottom:18px;z-index:40;display:none;
+}
+#s-collection.on .pot-change-bar{display:block}
+.pot-change-bar .btn{
+  width:100%;box-shadow:0 10px 28px rgba(40,100,60,.28);
+}
 </style>
 </head>
 <body>
@@ -1997,7 +2007,9 @@ input[type=file]{display:none}
       <div class="coll-sec">
         <div class="sec-hd"><span class="sec-ic"><svg viewBox="0 0 24 24"><path d="M5 9h14l-1 11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z" fill="currentColor"/><path d="M8 9V6M12 9V4M16 9V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><h3>我的花盘</h3><span class="cnt" id="potCur"></span></div>
         <div class="pot-mini" id="potMini"></div>
-        <button class="btn ghost" style="margin-top:10px" onclick="openPot('change')">更换花盘</button>
+        <div class="pot-change-bar">
+          <button type="button" class="btn ghost" id="btnChangePot" data-action="change-pot" onclick="openPot('change');return false;">更换花盆</button>
+        </div>
       </div>
     </div>
   </section>
@@ -2840,14 +2852,27 @@ function choosePlant(id){
   setAct(id); save(); openPot('onboard');
 }
 function openPot(mode){
-  potMode=mode;
-  try{ $('potPlant').textContent=spOf(S.species||S.active||'strawberry').name; }catch(e){}
-  const hd=document.querySelector('#s-pot .choose-h1');
-  if(hd) hd.innerHTML = mode==='onboard' ? '挑个<b>花盆</b>' : '更换<b>花盆</b>';
-  renderPots();
-  show('s-pot');
+  try{
+    potMode=mode;
+    try{ $('potPlant').textContent=spOf(S.species||S.active||'strawberry').name; }catch(e){}
+    const hd=document.querySelector('#s-pot .choose-h1');
+    if(hd) hd.innerHTML = mode==='onboard' ? '挑个<b>花盆</b>' : '更换<b>花盆</b>';
+    renderPots();
+    show('s-pot');
+    if(mode!=='onboard') toast('选择要换上的花盆');
+  }catch(e){
+    console.error('openPot failed', e);
+    toast('打开花盆失败，请重试');
+  }
 }
 window.openPot=openPot;
+/* 双保险：按钮 onclick + 事件委托，避免内联处理器失效 */
+document.addEventListener('click', function(e){
+  const t=e.target && e.target.closest && e.target.closest('[data-action="change-pot"]');
+  if(!t) return;
+  e.preventDefault();
+  openPot('change');
+});
 function renderPots(){
   const cur=POT_OF(S.pot).id;
   /* 首启选盆：只给基础款，不出现带解锁门槛的高级盆；
