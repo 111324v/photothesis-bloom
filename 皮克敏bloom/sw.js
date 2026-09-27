@@ -1,6 +1,6 @@
 /* 光合作用 Service Worker
    策略：导航 network-first（保证拿到新版），静态资源 cache-first（弱网/二次访问秒开） */
-const V = 'bloom-v668-potflow';
+const V = 'bloom-v669-potshelf';
 const CORE = [
   './index.html', './manifest.webmanifest',
   './app_assets/three/es-module-shims.js',
