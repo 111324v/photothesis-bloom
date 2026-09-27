@@ -192,13 +192,17 @@ html.is-fullscreen .fs-entry{display:none!important}
 @media (display-mode:standalone),(display-mode:fullscreen){
   .chrome{display:none!important}
   .notch{display:none!important}
-  body{padding:0;gap:0;justify-content:stretch;background:#000;overflow:hidden}
+  body{padding:0;gap:0;justify-content:stretch;background:#d8ebe0;overflow:hidden}
   .phone{width:100vw;height:100vh;height:var(--app-h,100dvh);border-radius:0;box-shadow:none}
 }
 html.is-fullscreen .chrome,html.is-fullscreen .notch{display:none!important}
-html.is-fullscreen body{padding:0;gap:0;justify-content:stretch;background:#000;overflow:hidden}
+html.is-fullscreen body{padding:0;gap:0;justify-content:stretch;background:#d8ebe0;overflow:hidden}
 html.is-fullscreen .phone{width:100vw;height:100vh;height:var(--app-h,100dvh);border-radius:0;box-shadow:none}
-body{overscroll-behavior:none;-webkit-user-select:none;user-select:none;margin:0;min-height:100dvh;height:100vh;height:var(--app-h,100dvh)}
+html,body{height:100%!important;min-height:100%!important;background:#d8ebe0!important}
+body{overscroll-behavior:none;-webkit-user-select:none;user-select:none;margin:0;
+  min-height:100dvh!important;height:100vh!important;height:var(--app-h,100dvh)!important;
+  background:#d8ebe0!important}
+.phone{background:#d8ebe0;min-height:100dvh;height:100vh;height:var(--app-h,100dvh)}
 /* iPhone X/XS 类：内容避开刘海与 Home 指示条 */
 @media (max-width:480px){
   .screens, .phone{padding-top:env(safe-area-inset-top,0px)}
@@ -834,7 +838,7 @@ input[type=file]{display:none}
 /* —— 伙伴登场卡：倾斜大贴纸 + 名牌 + 徽章，下方垫两页纸张 —— */
 #collHero{position:relative;overflow-x:auto!important;overflow-y:hidden;
   scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
-  border:none;border-radius:0;padding:22px 0 0;max-width:100%;box-sizing:border-box;
+  border:none;border-radius:0;padding:36px 0 0;max-width:100%;box-sizing:border-box;
   box-shadow:none;margin:0;background:transparent}
 #collHero::-webkit-scrollbar{display:none}
 #collHero .ch-track{display:flex;gap:12px}
@@ -1569,9 +1573,7 @@ input[type=file]{display:none}
   padding:14px 14px 14px 13px;display:flex;align-items:center;gap:14px;position:relative;
   box-shadow:0 8px 22px rgba(120,150,190,.18);border:1.5px solid rgba(255,255,255,.6);
   box-sizing:border-box;min-height:120px}
-#collHero .ch-badge{position:absolute;top:8px;left:12px;z-index:3;display:flex;align-items:baseline;gap:2px;
-  background:#fff;border:1.5px solid rgba(90,150,120,.4);border-radius:999px;padding:3px 11px 4px;
-  box-shadow:0 3px 8px rgba(120,150,190,.18);white-space:nowrap}
+#collHero .ch-badge{position:absolute;top:6px;left:12px;z-index:3;display:flex;align-items:center;gap:4px;background:#fff;border:1.5px solid rgba(90,150,120,.4);border-radius:999px;padding:4px 12px;box-shadow:0 3px 8px rgba(120,150,190,.18);white-space:nowrap;line-height:1.3;overflow:visible}
 #collHero .ch-badge b{font-family:var(--font-disp);font-size:15px;font-weight:800;color:#1d6b4a}
 #collHero .ch-badge span{font-size:11px;color:#5f8676}
 #collHero .ch-badge em{font-size:10px;color:#7a9a8c;font-style:normal;margin-left:4px;letter-spacing:.5px}
@@ -1864,6 +1866,20 @@ input[type=file]{display:none}
 #s-collection .pot-shelf .ps-lock{
   position:absolute;inset:0;border-radius:14px;background:rgba(255,255,255,.55);
   display:grid;place-items:center;font-size:10px;font-weight:800;color:#5a6b5f;
+}
+
+/* v670：图鉴徽章不裁切 + 页面底部无黑条（含 Home 指示条） */
+html,body{height:100%!important;background:#d8ebe0!important}
+#s-collection #collHero{padding-top:38px!important}
+#s-collection #collHero .ch-badge{
+  top:6px!important;line-height:1.35!important;padding:5px 12px!important;
+  overflow:visible!important;max-height:none!important;
+}
+#s-collection #collHero .ch-badge em{margin-left:4px;line-height:1.3!important}
+.phone{background:#d8ebe0!important}
+.screens{padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (max-width:480px){
+  body{background:#d8ebe0!important}
 }
 </style>
 </head>
