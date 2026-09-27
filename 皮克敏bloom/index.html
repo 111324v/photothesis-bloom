@@ -1743,6 +1743,34 @@ input[type=file]{display:none}
   border:2px dashed rgba(150,175,220,.42)!important;
   box-shadow:none!important}
 
+
+/* v664：图鉴首卡在 iPhone XS（375px）内完整收进屏宽 */
+#s-collection #collHero .ch-track{width:100%;max-width:100%;min-width:0}
+#s-collection #collHero .ch-card{
+  flex:0 0 100%!important;width:100%!important;max-width:100%!important;min-width:0!important;
+  box-sizing:border-box;overflow:hidden;
+  padding:12px 12px 12px 12px;gap:10px!important;min-height:112px;
+}
+#s-collection #collHero .ch-ico{
+  width:76px!important;height:76px!important;min-width:76px!important;
+  border-radius:22px!important;border-width:4px!important;
+}
+#s-collection #collHero .ch-ico img{padding:4px!important}
+#s-collection #collHero .ch-main{min-width:0!important;flex:1 1 auto!important;overflow:hidden}
+#s-collection #collHero .ch-en{font-size:10px!important;letter-spacing:.2px!important;white-space:nowrap!important}
+#s-collection #collHero .ch-name{font-size:22px!important;line-height:1.15!important;white-space:normal!important}
+#s-collection #collHero .ch-stage{font-size:11px!important;line-height:1.35!important;margin-top:2px!important}
+#s-collection #collHero .ch-side{
+  min-width:58px!important;max-width:70px!important;padding-left:8px!important;flex-shrink:0!important;
+}
+#s-collection #collHero .ch-num b{font-size:18px!important}
+#s-collection #collHero .ch-num span{font-size:10px!important}
+#s-collection #collHero .ch-badge{top:4px;left:10px;font-size:11px;padding:2px 10px}
+@media (max-width:414px){
+  #s-collection #collHero .ch-card{padding:11px 10px;gap:8px!important}
+  #s-collection #collHero .ch-ico{width:70px!important;height:70px!important;min-width:70px!important}
+  #s-collection #collHero .ch-name{font-size:20px!important}
+}
 </style>
 </head>
 <body>
