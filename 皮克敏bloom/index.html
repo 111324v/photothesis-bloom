@@ -2030,6 +2030,151 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#e8f2ec}
 
 #s-collection #collHero,#s-collection .coll-hero-wrap{padding-top:0!important;margin-top:0!important}
 #s-collection .sub-hd{padding-bottom:4px!important}
+
+/* ========== v679 FINAL：全局去绿条 + 铺满 + tab 固定高度 ==========
+   覆盖所有历史 choose-bg / .sub / #s-collection 渐变（含 #8fd08a、leaf-mid） */
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  overflow: hidden !important;
+  background: #eef6f1 !important;
+}
+.phone {
+  position: fixed !important;
+  left: 0 !important; top: 0 !important; right: 0 !important; bottom: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+  background: #eef6f1 !important;
+}
+.screens {
+  position: absolute !important;
+  inset: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+.screen, .sub {
+  position: absolute !important;
+  inset: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+}
+
+/* 一律浅色，禁止绿渐变底 */
+.choose-bg,
+#s-choose .choose-bg,
+#s-pot .choose-bg,
+.sub,
+#s-collection,
+#s-sync,
+#s-diary,
+#s-profile,
+#s-device,
+#s-pot,
+#s-choose,
+#s-home {
+  background: #eef6f1 !important;
+}
+.choose-bg { background: #eef6f1 !important; }
+
+/* 内容列：手机全宽；宽屏也不要两侧露绿 */
+.sub .body,
+#s-pot .pot-wrap,
+.sub-hd,
+.choose-hd,
+.sub .card {
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+.sub .body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  padding: 6px 16px calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+  background: transparent !important;
+}
+.sub-hd {
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 6px !important;
+  flex: 0 0 auto !important;
+}
+#s-collection .body,
+#s-sync .body,
+#s-diary .body,
+#s-profile .body {
+  padding-top: 6px !important;
+}
+.coll-hero-wrap,
+#collHero,
+#s-collection #collHero {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* 花盆页 */
+#s-pot .pot-wrap {
+  padding: 8px 16px 16px !important;
+}
+#s-pot .choose-hd {
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px 4px !important;
+}
+#s-pot .choose-quote {
+  padding: 4px 16px 8px !important;
+}
+
+/* 底部 tab：固定高度，禁止被拉伸 */
+.dock {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  padding: 0 12px calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  z-index: 40 !important;
+}
+.dock .pill-tabs {
+  flex: 1 1 auto !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
+  padding: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  overflow: hidden !important;
+}
+.dock .pill-tabs button {
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  padding: 0 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  flex: 0 1 auto !important;
+}
+.dock .pill-tabs button svg {
+  width: 16px !important;
+  height: 16px !important;
+  flex-shrink: 0 !important;
+}
+/* 桌面演示时也不允许内容列撑出两侧彩条 */
+@media (min-width: 481px) {
+  .sub .body, #s-pot .pot-wrap { max-width: none !important; }
+  .phone { background: #eef6f1 !important; }
+}
 </style>
 </head>
 <body>
