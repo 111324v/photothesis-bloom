@@ -894,7 +894,10 @@ input[type=file]{display:none}
   box-shadow:0 12px 26px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.8);text-align:center;cursor:pointer}
 .sp-plate{display:flex;align-items:baseline;justify-content:center;gap:7px;padding:9px 8px 8px;
   background:linear-gradient(90deg,rgba(255,255,255,.0),rgba(255,255,255,.35));border-bottom:1px solid rgba(0,0,0,.05)}
-.sp-name{font-family:var(--font-disp);font-size:var(--fs-md);font-weight:var(--fw-black);color:var(--ink-plant);line-height:1.1}
+.sp-plate{flex-wrap:nowrap!important;gap:6px!important}
+.sp-name{font-family:var(--font-disp);font-size:clamp(12px,3.4vw,15px);font-weight:var(--fw-black);color:var(--ink-plant);line-height:1.15;
+  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;min-width:0}
+.sp-en{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;max-width:46%;flex-shrink:1}
 .sp-en{font-size:9px;color:#a8b3aa;font-style:normal;letter-spacing:.4px;text-transform:uppercase}
 .sp-stick{width:92px;height:92px;margin:10px auto 6px;border-radius:30px;border:3px solid #fff;
   background:radial-gradient(circle at 32% 28%,#eafff0,#c8ecd6 62%,#b8e4d0);box-shadow:0 8px 18px rgba(30,70,50,.16)}
@@ -1863,6 +1866,14 @@ input[type=file]{display:none}
 #s-collection .pot-shelf .ps-ico img{width:100%;height:100%;object-fit:contain}
 #s-collection .pot-shelf .ps-ico svg{width:100%;height:100%}
 #s-collection .pot-shelf .ps-name{font-size:12px;font-weight:800;color:#1e4d2b;text-align:center;line-height:1.25}
+#s-collection .pot-shelf .ps-item.on{border-color:var(--sun-400);background:linear-gradient(180deg,#fff8e6,#fcecc8);box-shadow:0 10px 22px rgba(240,138,46,.28)}
+#s-collection .pot-shelf .ps-foot{width:100%;display:flex;justify-content:center;margin-top:2px}
+#s-collection .pot-shelf .ps-foot .tag-cur,
+#s-collection .pot-shelf .ps-foot .tag-ok{
+  display:inline-block;font-size:10px;font-weight:800;border-radius:999px;padding:2px 10px;
+}
+#s-collection .pot-shelf .ps-foot .tag-cur{background:var(--sun-600);color:#fff}
+#s-collection .pot-shelf .ps-foot .tag-ok{background:#eaf7e6;color:#2a6010}
 #s-collection .pot-shelf .ps-lock{
   position:absolute;inset:0;border-radius:14px;background:rgba(255,255,255,.55);
   display:grid;place-items:center;font-size:10px;font-weight:800;color:#5a6b5f;
@@ -2073,11 +2084,7 @@ html,body{height:100%!important;background:#d8ebe0!important}
       </div>
       <div class="coll-sec">
         <div class="sec-hd"><span class="sec-ic"><svg viewBox="0 0 24 24"><path d="M5 9h14l-1 11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z" fill="currentColor"/><path d="M8 9V6M12 9V4M16 9V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><h3>我的花盘</h3><span class="cnt" id="potCur"></span></div>
-        <div class="pot-mini" id="potMini"></div>
         <div class="pot-shelf" id="potShelf"></div>
-        <div class="pot-change-bar">
-          <button type="button" class="btn ghost" id="btnChangePot" data-action="change-pot" onclick="openPot('change');return false;">去花盆大图挑选</button>
-        </div>
       </div>
     </div>
   </section>
@@ -2848,10 +2855,7 @@ function renderColl(){
   if($('collCnt'))$('collCnt').textContent=gotSp+' / '+totalSp;
   if($('potCur'))$('potCur').textContent=POT_OF(S.pot).name;
   renderPotShelf();
-  if($('potMini')){
-    const cur=POT_OF(S.pot);
-    $('potMini').innerHTML=`<img src="app_assets/${encodeURIComponent(cur.img).replace(/%2F/g,'/')}" alt="${cur.name}" onerror="this.replaceWith(document.createRange().createContextualFragment(potSvg('${cur.id}')))">`;
-  }
+
   const pw=Math.round(prog()*100);
   $('giftGrid').innerHTML=`
     <div class="gift-card gc-postcard">
@@ -2941,12 +2945,17 @@ window.openPot=openPot;
 /* 图鉴页花盆陈列：全部花盆，点选即换（锁定盆提示） */
 function renderPotShelf(){
   const el=document.getElementById('potShelf'); if(!el)return;
+  const curId=POT_OF(S.pot).id;
   el.innerHTML=POTS.map(p=>{
-    const locked=potLocked(p), on=POT_OF(S.pot).id===p.id;
+    const locked=potLocked(p), on=curId===p.id;
+    const foot=locked?`<div class="ps-foot"><span class="tag-ok" style="opacity:.75">累计 ${p.unlock*15} 光合</span></div>`
+      :(on?`<div class="ps-foot"><span class="tag-cur">使用中</span></div>`
+      :`<div class="ps-foot"><span class="tag-ok">可选用</span></div>`);
     return `<div class="ps-item ${on?'on':''} ${locked?'lock':''}" data-pot="${p.id}">
       <div class="ps-ico"><img src="app_assets/${encodeURIComponent(p.img).replace(/%2F/g,'/')}" alt="${p.name}" onerror="this.replaceWith(document.createRange().createContextualFragment(potSvg('${p.id}')))"></div>
       <div class="ps-name">${p.name}</div>
-      ${locked?`<div class="ps-lock">累计 ${p.unlock*15} 光合解锁</div>`:''}
+      ${locked?`<div class="ps-lock">未解锁</div>`:''}
+      ${foot}
     </div>`;
   }).join('');
 }
@@ -2960,9 +2969,6 @@ function switchPot(id){
   S.pot=id; save();
   renderPot();
   if($('potCur'))$('potCur').textContent=p.name;
-  if($('potMini')){
-    $('potMini').innerHTML=`<img src="app_assets/${encodeURIComponent(p.img).replace(/%2F/g,'/')}" alt="${p.name}" onerror="this.replaceWith(document.createRange().createContextualFragment(potSvg('${p.id}')))">`;
-  }
   renderPotShelf();
   toast('已换上 '+p.name);
 }
