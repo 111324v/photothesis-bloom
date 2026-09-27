@@ -412,13 +412,18 @@ body.in-standalone .status{display:none!important}
 .prog-fill{height:100%;width:0;border-radius:var(--r-xs);background:linear-gradient(90deg,var(--green-200),var(--sun-200));transition:width var(--dur-slow) ease}
 .prog-next{font-size:var(--fs-xs);color:var(--glass-txt-strong);margin-top:var(--sp-1)}
 .hf-row{display:flex;align-items:center;gap:var(--sp-3)}
-.stage-dots{position:relative;height:8px;padding:0;border-radius:999px;background:var(--glass-dot);overflow:visible}
-.stage-dots i{position:absolute;inset:0;height:100%;border-radius:999px;background:transparent;overflow:visible}
-.stage-dots i b{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:999px;
-  background:linear-gradient(90deg,#5ecf7a 0%,#9ad86e 28%,#ffe066 62%,#ffb547 88%,#f08a2e 100%);
-  box-shadow:0 0 8px rgba(120,200,120,.25);transition:width var(--dur-slow) ease}
+/* 分阶段轨道：保留 6 段；颜色取自整条旅程渐变（青绿→橙红），不在每段重复 */
+.stage-dots{display:flex;gap:6px;padding:0 2px;position:relative;height:8px}
+.stage-dots i{flex:1;height:8px;border-radius:999px;background:var(--glass-dot);overflow:hidden;position:relative}
+.stage-dots i b{
+  position:absolute;inset:0;width:0;height:100%;border-radius:999px;
+  background-image:linear-gradient(90deg,#2bb89a 0%,#5ecf7a 22%,#b8e06a 42%,#ffe066 62%,#ff9f43 82%,#e85a3a 100%);
+  background-size:600% 100%;
+  background-repeat:no-repeat;
+  transition:width var(--dur-slow) ease;
+}
 .stage-dots i.done b{width:100%}
-.stage-dots i.cur b{box-shadow:0 0 6px rgba(255,224,102,.35)}
+.stage-dots i.cur b{box-shadow:0 0 5px rgba(255,224,102,.35)}
 .stage-next-tip{font-size:var(--fs-xs);color:var(--glass-txt-strong);margin-top:var(--sp-1);text-align:center}
 /* 阶段节点标记：进度位置竖标 + 下一阶段预期名徽章 */
 .stage-rail{position:relative;padding-top:22px;padding-bottom:2px}
@@ -1346,7 +1351,7 @@ input[type=file]{display:none}
 .today-box .t2{font-size:15px;line-height:1.2}
 .prog-top{margin-bottom:3px;font-size:12px}
 .stage-rail{padding-top:22px}
-.stage-dots{height:8px}
+.stage-dots{height:8px;display:flex;gap:6px}
 .stage-node{top:26px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center}
 .stage-node .sn-badge{position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);margin-bottom:0;white-space:nowrap}
 .stage-node i{width:14px;height:14px;border-radius:50%;top:0;
@@ -3068,11 +3073,17 @@ function refresh(){
   $('tdN').textContent=Math.min(todayRecs().length,9);
   $('stageName').textContent=st.zh+' · '+sp.name;
   /* 唯一进度条：6 阶段分段填充（已走过的阶段整段填色，当前阶段按阶段内进度填充） */
-  const journeyPct=Math.min(100,Math.max(0,(S.total/FULL)*100));
-  $('stageDots').innerHTML=`<i class="cur"><b style="width:${journeyPct.toFixed(2)}%"></b></i>`;
+  /* 分阶段填充 + 整条旅程渐变取色：段 k 用 background-position 对齐大图第 k 段 */
+  const N=STAGES.length;
+  $('stageDots').innerHTML=STAGES.map((_,k)=>{
+    const w=k<st.i?100:(k===st.i?Math.round(st.pct*100):0);
+    const cls=k<st.i?'done':(k===st.i?'cur':'');
+    const bgPos=Math.round(k*100/Math.max(1,N-1)); /* 0,20,40…100 for 6 segments */
+    return `<i class="${cls}"><b style="width:${w}%;background-position:${bgPos}% 0"></b></i>`;
+  }).join('');
   $('stageNext').textContent=st.next?`下一阶段「${st.next}」· 还需 ${st.need} 光合`:'已成熟 · 去图鉴领取收获';
   /* 阶段节点标记：竖标落在当前进度位置，上方徽章写下一阶段的预期名字 */
-  const nodePct=Math.min(100,Math.max(0,(S.total/FULL)*100));
+  const nodePct=Math.min(100,Math.max(0,((st.i+st.pct)/STAGES.length)*100));
   if($('stageNode')){$('stageNode').style.left=nodePct+'%';$('stageNodeTxt').textContent=st.next||'已成熟'}
   if($('actWaterT'))$('actWaterT').textContent=S.today.waterMl?S.today.waterMl+' ml':'记一杯';
   if(!walkTimer&&$('actWalkT'))$('actWalkT').textContent = S.today.walkMin?S.today.walkMin+' 分钟':'点击开始';
