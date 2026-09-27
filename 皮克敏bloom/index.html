@@ -412,15 +412,18 @@ body.in-standalone .status{display:none!important}
 .prog-fill{height:100%;width:0;border-radius:var(--r-xs);background:linear-gradient(90deg,var(--green-200),var(--sun-200));transition:width var(--dur-slow) ease}
 .prog-next{font-size:var(--fs-xs);color:var(--glass-txt-strong);margin-top:var(--sp-1)}
 .hf-row{display:flex;align-items:center;gap:var(--sp-3)}
-.stage-dots{display:flex;gap:6px;padding:0 2px}
-.stage-dots i{flex:1;height:7px;border-radius:var(--r-2xs);background:var(--glass-dot);overflow:hidden;position:relative}
-.stage-dots i b{position:absolute;inset:0;width:0;border-radius:var(--r-2xs);background:linear-gradient(90deg,var(--green-200),var(--sun-200));transition:width var(--dur-slow) ease}
+.stage-dots{position:relative;height:8px;padding:0;border-radius:999px;background:var(--glass-dot);overflow:visible}
+.stage-dots i{position:absolute;inset:0;height:100%;border-radius:999px;background:transparent;overflow:visible}
+.stage-dots i b{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:999px;
+  background:linear-gradient(90deg,#5ecf7a 0%,#9ad86e 28%,#ffe066 62%,#ffb547 88%,#f08a2e 100%);
+  box-shadow:0 0 8px rgba(120,200,120,.25);transition:width var(--dur-slow) ease}
 .stage-dots i.done b{width:100%}
-.stage-dots i.cur b{box-shadow:0 0 6px rgba(255,224,102,.55)}
+.stage-dots i.cur b{box-shadow:0 0 6px rgba(255,224,102,.35)}
 .stage-next-tip{font-size:var(--fs-xs);color:var(--glass-txt-strong);margin-top:var(--sp-1);text-align:center}
 /* 阶段节点标记：进度位置竖标 + 下一阶段预期名徽章 */
-.stage-rail{position:relative;padding-top:26px}
-.stage-node{position:absolute;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;transition:left var(--dur-slow) ease;pointer-events:none}
+.stage-rail{position:relative;padding-top:22px;padding-bottom:2px}
+/* 圆点垂直对齐轨道中心线：rail padding-top 22 + 半轨高 4 */
+.stage-node{position:absolute;top:26px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:left var(--dur-slow) ease;pointer-events:none;z-index:2}
 .stage-node i{width:7px;height:15px;border-radius:4px;background:linear-gradient(180deg,var(--sun-200),var(--sun-400));box-shadow:0 0 8px rgba(255,224,102,.65)}
 .stage-node .sn-badge{font-size:var(--fs-2xs);font-weight:var(--fw-black);color:var(--sun-800);background:var(--sun-100);border:1.5px solid var(--sun-200);border-radius:var(--r-full);padding:2px 9px;white-space:nowrap;margin-bottom:4px;box-shadow:0 2px 6px rgba(0,0,0,.18)}
 /* 散步进行中状态条（过程性交互，与晒太阳一致） */
@@ -824,9 +827,12 @@ input[type=file]{display:none}
   border-radius:999px;padding:2px 12px;backdrop-filter:blur(4px)}
 
 /* —— 伙伴登场卡：倾斜大贴纸 + 名牌 + 徽章，下方垫两页纸张 —— */
-#collHero{position:relative;overflow:visible;border:none;border-radius:20px;padding:var(--sp-5);
+#collHero{position:relative;overflow:hidden;border:none;border-radius:20px;padding:var(--sp-5);max-width:100%;box-sizing:border-box;
   box-shadow:0 18px 40px rgba(0,0,0,.22);margin-top:var(--sp-3)}
-#collHero::before{content:"";position:absolute;inset:6px -8px -9px -8px;z-index:-2;border-radius:20px;
+#collHero .ch-card{max-width:100%;box-sizing:border-box;overflow:hidden}
+#collHero .ch-main{min-width:0;overflow:hidden}
+#collHero .ch-name,#collHero .ch-en,#collHero .ch-stage{white-space:normal;overflow:hidden;overflow-wrap:anywhere;line-height:1.35}
+#collHero::before{content:"";position:absolute;inset:6px 0 -9px 0;z-index:-2;border-radius:20px;
   background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.06));border:1.5px solid rgba(255,255,255,.4)}
 #collHero::after{content:"";position:absolute;inset:0;border-radius:20px;pointer-events:none;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.7), inset 0 -18px 40px rgba(0,0,0,.10)}
@@ -842,7 +848,7 @@ input[type=file]{display:none}
 #collHero .ch-bar i::after{content:"";position:absolute;right:-2px;top:-4px;width:16px;height:16px;border-radius:50%;
   background:radial-gradient(circle at 35% 30%,#ffe9a8,#f7a13b);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 #collHero .ch-num{color:rgba(255,255,255,.95);font-weight:700}
-#collHero .ch-side{border-left:2px dashed rgba(255,255,255,.65)}
+#collHero .ch-side{border-left:1px solid #eef2ee!important;min-width:56px!important;max-width:72px!important;padding-left:8px!important;flex-shrink:0}
 #collHero .ch-cnt b{color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.25)}
 #collHero .ch-cnt span{color:rgba(255,255,255,.85)}
 #collHero .ch-lbl{color:rgba(255,255,255,.92)}
@@ -1263,7 +1269,10 @@ input[type=file]{display:none}
 .dock{position:absolute;left:14px;right:14px;bottom:12px}
 /* ② 植物顶部 tab：添加按钮（单圆 + 白色加号，去掉双层圆环） */
 .pt-add{background:linear-gradient(180deg,#d4efd8,#a9e2b1)!important;border:0!important;color:#fff!important;
-  box-shadow:0 3px 8px rgba(90,150,120,.2)!important;min-width:auto!important;flex-direction:row!important;padding:3px!important;border-radius:50%!important}
+  box-shadow:0 3px 8px rgba(90,150,120,.2)!important;
+  width:32px!important;height:32px!important;min-width:32px!important;min-height:32px!important;
+  max-width:32px!important;max-height:32px!important;flex:0 0 32px!important;align-self:center!important;
+  padding:0!important;border-radius:50%!important;overflow:hidden!important}
 .pt-add .pt-ic{width:24px;height:24px;background:transparent;display:grid;place-items:center;margin-bottom:0;box-shadow:none}
 .pt-add .pt-ic svg{width:16px;height:16px;color:#fff;stroke-width:3}
 .pt-add:active{transform:scale(.94)}
@@ -1336,11 +1345,13 @@ input[type=file]{display:none}
 .hf-row{gap:10px}
 .today-box .t2{font-size:15px;line-height:1.2}
 .prog-top{margin-bottom:3px;font-size:12px}
-.stage-rail{padding-top:20px}
-.stage-dots i{height:8px;border-radius:999px}
-.stage-node i{width:12px;height:12px;border-radius:50%;top:-2px;
+.stage-rail{padding-top:22px}
+.stage-dots{height:8px}
+.stage-node{top:26px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.stage-node .sn-badge{position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);margin-bottom:0;white-space:nowrap}
+.stage-node i{width:14px;height:14px;border-radius:50%;top:0;
   background:radial-gradient(circle at 35% 30%,#ffe9a8,#ffc93c 55%,#f5a623);
-  box-shadow:0 0 10px rgba(255,201,60,.8),0 3px 6px rgba(240,166,35,.3)}
+  box-shadow:0 0 0 2px rgba(255,255,255,.85),0 0 10px rgba(255,201,60,.85),0 3px 6px rgba(240,166,35,.35)}
 .stage-node .sn-badge{padding:1px 9px;margin-bottom:2px;font-size:10px;box-shadow:0 1px 4px rgba(120,150,190,.18)}
 .stage-next-tip{margin-top:6px;font-size:11px}
 
@@ -1547,7 +1558,7 @@ input[type=file]{display:none}
   padding:14px 14px 14px 13px;display:flex;align-items:center;gap:14px;position:relative;
   box-shadow:0 8px 22px rgba(120,150,190,.18);border:1.5px solid rgba(255,255,255,.6);
   box-sizing:border-box;min-height:120px}
-#collHero .ch-badge{position:absolute;top:-10px;left:0;z-index:3;display:flex;align-items:baseline;gap:2px;
+#collHero .ch-badge{position:absolute;top:8px;left:12px;z-index:3;display:flex;align-items:baseline;gap:2px;
   background:#fff;border:1.5px solid rgba(90,150,120,.4);border-radius:999px;padding:3px 11px 4px;
   box-shadow:0 3px 8px rgba(120,150,190,.18);white-space:nowrap}
 #collHero .ch-badge b{font-family:var(--font-disp);font-size:15px;font-weight:800;color:#1d6b4a}
@@ -3057,13 +3068,11 @@ function refresh(){
   $('tdN').textContent=Math.min(todayRecs().length,9);
   $('stageName').textContent=st.zh+' · '+sp.name;
   /* 唯一进度条：6 阶段分段填充（已走过的阶段整段填色，当前阶段按阶段内进度填充） */
-  $('stageDots').innerHTML=STAGES.map((_,k)=>{
-    const w=k<st.i?100:(k===st.i?Math.round(st.pct*100):0);
-    return `<i class="${k<st.i?'done':(k===st.i?'cur':'')}"><b style="width:${w}%"></b></i>`;
-  }).join('');
+  const journeyPct=Math.min(100,Math.max(0,(S.total/FULL)*100));
+  $('stageDots').innerHTML=`<i class="cur"><b style="width:${journeyPct.toFixed(2)}%"></b></i>`;
   $('stageNext').textContent=st.next?`下一阶段「${st.next}」· 还需 ${st.need} 光合`:'已成熟 · 去图鉴领取收获';
   /* 阶段节点标记：竖标落在当前进度位置，上方徽章写下一阶段的预期名字 */
-  const nodePct=Math.min(100,Math.round((st.i+st.pct)/STAGES.length*1000)/10);
+  const nodePct=Math.min(100,Math.max(0,(S.total/FULL)*100));
   if($('stageNode')){$('stageNode').style.left=nodePct+'%';$('stageNodeTxt').textContent=st.next||'已成熟'}
   if($('actWaterT'))$('actWaterT').textContent=S.today.waterMl?S.today.waterMl+' ml':'记一杯';
   if(!walkTimer&&$('actWalkT'))$('actWalkT').textContent = S.today.walkMin?S.today.walkMin+' 分钟':'点击开始';
