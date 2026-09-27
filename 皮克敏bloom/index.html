@@ -837,8 +837,8 @@ input[type=file]{display:none}
 
 /* —— 伙伴登场卡：倾斜大贴纸 + 名牌 + 徽章，下方垫两页纸张 —— */
 /* 徽章在滚动容器外，避免 overflow 裁切文字 */
-.coll-hero-wrap{position:relative;width:100%;padding-top:34px}
-#chBadge{position:absolute;top:0;left:12px;z-index:3;display:flex;align-items:center;gap:4px;
+.coll-hero-wrap{position:relative;width:100%;padding-top:0}
+#chBadge,.ch-badge{display:none!important}#chBadgeUnused{position:absolute;top:0;left:12px;z-index:3;display:flex;align-items:center;gap:4px;
   background:#fff;border:1.5px solid rgba(90,150,120,.4);border-radius:999px;
   padding:5px 12px;box-shadow:0 3px 8px rgba(120,150,190,.18);
   white-space:nowrap;line-height:1.35;overflow:visible;font-size:11px;color:#5f8676}
@@ -1585,7 +1585,7 @@ input[type=file]{display:none}
   padding:14px 14px 14px 13px;display:flex;align-items:center;gap:14px;position:relative;
   box-shadow:0 8px 22px rgba(120,150,190,.18);border:1.5px solid rgba(255,255,255,.6);
   box-sizing:border-box;min-height:120px}
-#collHero .ch-badge{position:absolute;top:6px;left:12px;z-index:3;display:flex;align-items:center;gap:4px;background:#fff;border:1.5px solid rgba(90,150,120,.4);border-radius:999px;padding:4px 12px;box-shadow:0 3px 8px rgba(120,150,190,.18);white-space:nowrap;line-height:1.3;overflow:visible}
+#collHero .ch-badge{display:none!important}
 #collHero .ch-badge b{font-family:var(--font-disp);font-size:15px;font-weight:800;color:#1d6b4a}
 #collHero .ch-badge span{font-size:11px;color:#5f8676}
 #collHero .ch-badge em{font-size:10px;color:#7a9a8c;font-style:normal;margin-left:4px;letter-spacing:.5px}
@@ -1667,7 +1667,7 @@ input[type=file]{display:none}
   background:radial-gradient(ellipse,color-mix(in srgb,var(--gc) 28%,transparent),transparent 72%);
   pointer-events:none}
 #collHero .ch-ico{width:116px!important;height:116px!important;flex-shrink:0;margin-left:-2px}
-#collHero .ch-badge{gap:4px;padding:3px 12px 4px 8px}
+#collHero .ch-badge{display:none!important}
 #collHero .ch-badge svg{width:15px;height:15px;flex-shrink:0}
 
 
@@ -1695,8 +1695,7 @@ input[type=file]{display:none}
 #collHero .ch-card::before{display:none!important}
 #collHero .ch-ico{pointer-events:none;user-select:none;-webkit-user-drag:none}
 #collHero .ch-ico img{pointer-events:none;-webkit-user-drag:none}
-#collHero .ch-badge{border:none!important;background:transparent!important;
-  box-shadow:none!important;padding-left:2px!important;top:-12px!important}
+#collHero .ch-badge{display:none!important}
 #collHero .ch-badge b{color:#1d6b4a}
 #collHero .ch-badge span{color:#4f8068}
 #collHero .ch-badge em{color:#6f9a84}
@@ -1779,7 +1778,7 @@ input[type=file]{display:none}
 }
 #s-collection #collHero .ch-num b{font-size:18px!important}
 #s-collection #collHero .ch-num span{font-size:10px!important}
-#s-collection #collHero .ch-badge{top:4px;left:10px;font-size:11px;padding:2px 10px}
+#s-collection #collHero .ch-badge{display:none!important}
 @media (max-width:414px){
   #s-collection #collHero .ch-card{padding:11px 10px;gap:8px!important}
   #s-collection #collHero .ch-ico{width:70px!important;height:70px!important;min-width:70px!important}
@@ -1891,10 +1890,7 @@ input[type=file]{display:none}
 /* v670：图鉴徽章不裁切 + 页面底部无黑条（含 Home 指示条） */
 html,body{height:100%!important;background:#d8ebe0!important}
 #s-collection #collHero{padding-top:38px!important}
-#s-collection #collHero .ch-badge{
-  top:6px!important;line-height:1.35!important;padding:5px 12px!important;
-  overflow:visible!important;max-height:none!important;
-}
+#s-collection #collHero .ch-badge{display:none!important}
 #s-collection #collHero .ch-badge em{margin-left:4px;line-height:1.3!important}
 .phone{background:#d8ebe0!important}
 .screens{padding-bottom:0}
@@ -2152,7 +2148,6 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#e8f2ec}
     <div class="sub-hd"><div class="back" onclick="closeSub()"><img src="app_assets/back-arrow.svg" alt=""></div><div><h2>图鉴</h2><div class="sub-sub">已经收集到的伙伴与成长进度</div></div></div>
     <div class="body">
       <div class="coll-hero-wrap">
-        <div class="ch-badge" id="chBadge"></div>
         <div class="coll-hero" id="collHero"></div>
       </div>
       <div class="coll-sec">
@@ -3035,8 +3030,6 @@ function renderColl(){
       <div class="ch-side"><div class="ch-num"><b>${Math.round(prc*100)}%</b><span>光合 ${ptc}/${FULL}</span></div></div>
     </div>`;
   }).join('');
-  const _badge=$('chBadge');
-  if(_badge) _badge.innerHTML=`<svg viewBox="0 0 24 24"><path d="M12 21V11" stroke="#2f8a4d" stroke-width="1.6" stroke-linecap="round"/><path d="M12 14C9 14 6.5 12 5.5 9 9 8.5 12 10.5 12 14z" fill="#4caf6a"/><path d="M12 12c0-3.5 2-6 6-7 .3 3.8-1.8 6.5-6 7z" fill="#3d9a55"/></svg><b>${gotSp}</b><span>/${totalSp}</span><em>已解锁物种</em>`;
   $('collHero').innerHTML=`<div class="ch-track">${_heroCards}</div>`;
   if(_hero)_hero.scrollLeft=0;
   if($('collCnt'))$('collCnt').textContent=gotSp+' / '+totalSp;
