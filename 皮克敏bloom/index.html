@@ -2178,6 +2178,9 @@ html, body {
 .dock .cam-fab {
   pointer-events: auto !important;
 }
+
+.cam-fab{touch-action:none!important;user-select:none!important;-webkit-user-select:none!important;cursor:grab!important}
+.cam-fab.dragging{cursor:grabbing!important;transition:none!important}
 </style>
 </head>
 <body>
@@ -3772,64 +3775,85 @@ renderChoose(); refresh(); renderRems(); renderActs(); renderHomeActs();
 
 
 
-/* ============ v507f：相机按钮可拖拽（吸附/边界以手机容器为准，按钮永不滑出画面） ============ */
+/* ============ v682：相机按钮可拖（鼠标+触控）松手吸边 ============ */
 (function(){
   const fab=document.querySelector('.cam-fab'); if(!fab)return;
-  let BASE=null,acc={x:0,y:0},dragging=false,moved=false,sx=0,sy=0;
+  fab.style.touchAction='none';
+  fab.style.userSelect='none';
+  let BASE=null,acc={x:0,y:0},dragging=false,moved=false,sx=0,sy=0,pid=null;
   const clamp=(v,a,b)=>Math.min(Math.max(v,a),b);
-  const box=()=>{                      /* 拖拽有效区域 = 手机画面容器（保证按钮始终可见） */
+  const box=()=>{
     const ph=document.querySelector('.phone');
     if(ph){const r=ph.getBoundingClientRect();return {l:r.left,t:r.top,r:r.right,b:r.bottom};}
     return {l:0,t:0,r:innerWidth,b:innerHeight};
   };
+  const pt=e=>{
+    if(e.touches&&e.touches[0])return {x:e.touches[0].clientX,y:e.touches[0].clientY};
+    if(e.changedTouches&&e.changedTouches[0])return {x:e.changedTouches[0].clientX,y:e.changedTouches[0].clientY};
+    return {x:e.clientX,y:e.clientY};
+  };
   const onMove=e=>{
     if(!dragging||!BASE)return;
-    if(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)>4)moved=true;
+    if(e.cancelable)e.preventDefault();
+    const {x,y}=pt(e);
+    if(Math.abs(x-sx)+Math.abs(y-sy)>4)moved=true;
     if(!moved)return;
     const w=fab.offsetWidth;
     const b=box(), av=document.querySelector('.avatar-btn');
     const yMin=av?(av.getBoundingClientRect().bottom+10):(b.t+80);
     const yMax=b.b-16-w;
-    const tx=clamp(e.clientX-sx+acc.x, b.l+12-BASE.l, b.r-12-w-BASE.l);
-    const ty=clamp(e.clientY-sy+acc.y, yMin-BASE.t, yMax-BASE.t);
+    const tx=clamp(x-sx+acc.x, b.l+12-BASE.l, b.r-12-w-BASE.l);
+    const ty=clamp(y-sy+acc.y, yMin-BASE.t, yMax-BASE.t);
     fab.style.transform='translate('+tx+'px,'+ty+'px)';
   };
   const onUp=()=>{
     if(!dragging)return; dragging=false;
     fab.classList.remove('dragging');
-    document.removeEventListener('mousemove',onMove);
-    document.removeEventListener('mouseup',onUp);
+    try{ if(pid!=null && fab.releasePointerCapture) fab.releasePointerCapture(pid); }catch(err){}
+    pid=null;
+    window.removeEventListener('pointermove',onMove);
+    window.removeEventListener('pointerup',onUp);
+    window.removeEventListener('pointercancel',onUp);
     if(!moved||!BASE){fab.style.transition='';return;}
     const r=fab.getBoundingClientRect(), w=fab.offsetWidth, b=box();
-    const toLeft=(r.left+r.width/2)<(b.l+b.r)/2;      /* 靠近哪侧吸附哪侧 */
+    const toLeft=(r.left+r.width/2)<(b.l+b.r)/2;
     const tx=toLeft?(b.l+12-BASE.l):(b.r-12-w-BASE.l);
-    const ty=r.top-BASE.t;
+    const ty=clamp(r.top-BASE.t, (b.t+80)-BASE.t, b.b-16-w-BASE.t);
     fab.style.transition='transform .3s cubic-bezier(.32,.72,0,1)';
     fab.style.transform='translate('+tx+'px,'+ty+'px)';
-    setTimeout(()=>{fab.style.transition='';moved=false;},380);
-    setTimeout(()=>{
-      const rr=fab.getBoundingClientRect();
-      if(rr.width<20||rr.height<20||rr.bottom<b.t-20||rr.top>b.b+20||rr.right<b.l-20||rr.left>b.r+20){
-        fab.style.transform='';fab.style.transition='';
-      }
-    },700);
+    setTimeout(()=>{fab.style.transition='';},320);
   };
-  fab.addEventListener('mousedown',e=>{
+  const onDown=e=>{
+    if(e.button!=null&&e.button!==0)return;
     e.preventDefault();
+    const {x,y}=pt(e);
     const r=fab.getBoundingClientRect();
-    if(!BASE&&r.width>0){BASE={l:r.left,t:r.top,r:r.right};}
+    if(!BASE&&r.width>0)BASE={l:r.left,t:r.top,r:r.right};
     if(BASE)acc={x:r.left-BASE.l,y:r.top-BASE.t};
-    dragging=true;moved=false;
+    dragging=true;moved=false;sx=x;sy=y;
+    pid=e.pointerId!=null?e.pointerId:null;
     fab.classList.add('dragging');
-    sx=e.clientX;sy=e.clientY;
     fab.style.transition='none';
-    document.addEventListener('mousemove',onMove);
-    document.addEventListener('mouseup',onUp);
-  });
+    if(pid!=null&&fab.setPointerCapture){
+      try{fab.setPointerCapture(pid);}catch(err){}
+    }
+    window.addEventListener('pointermove',onMove,{passive:false});
+    window.addEventListener('pointerup',onUp,{passive:true});
+    window.addEventListener('pointercancel',onUp,{passive:true});
+    /* 触屏补充监听（部分 WebView） */
+    window.addEventListener('touchmove',onMove,{passive:false});
+    window.addEventListener('touchend',onUp,{passive:true});
+    window.addEventListener('touchcancel',onUp,{passive:true});
+  };
+  fab.addEventListener('pointerdown',onDown);
+  fab.addEventListener('touchstart',onDown,{passive:false});
   fab.addEventListener('click',e=>{ if(moved){e.stopImmediatePropagation();e.preventDefault();moved=false;} },true);
-  window.addEventListener('show',function(){ if(!document.getElementById('s-home').classList.contains('on'))return;
+  window.addEventListener('resize',()=>{
     const r=fab.getBoundingClientRect(), b=box();
-    if(r.right<b.l||r.left>b.r||r.bottom<b.t||r.top>b.b){fab.style.transform='';fab.style.transition='';} },true);
+    if(r.width<1||r.right<b.l-20||r.left>b.r+20||r.bottom<b.t-20||r.top>b.b+20){
+      fab.style.transform='';fab.style.transition='';
+    }
+  },true);
 })();
 
 
