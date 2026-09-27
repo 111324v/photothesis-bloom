@@ -2306,13 +2306,23 @@ body.in-standalone .phone{position:fixed;inset:0;width:100vw;height:100dvh;heigh
 <div class="sheet" id="sheetAct"><div class="sheet-box">
   <h3 id="sheetActTitle">添加自定义活动</h3>
   <div class="field"><label>活动名称</label><input id="actName" type="text" placeholder="例如：拉伸 5 分钟"></div>
+  <div class="field"><label>活动类型</label>
+    <select id="actType" onchange="syncActTypeUI()">
+      <option value="timed">过程性 · 计时（如散步）</option>
+      <option value="instant">一次性 · 即时（如喝水）</option>
+    </select>
+  </div>
+  <div class="field"><label id="actRateLabel">每分钟光合</label>
+    <input id="actRate" type="number" min="0" max="20" step="0.5" value="1" oninput="this.dataset.touched='1'">
+    <div class="muted" id="actRateHelp" style="margin-top:6px">点「开始」计时，点「结束」按实际分钟数结算光合。</div>
+  </div>
   <div class="field"><label>图标</label>
     <select id="actIcon">
       <option value="leaf">叶子</option><option value="sun">太阳</option><option value="water">水滴</option>
       <option value="walk">走路</option><option value="star">星星</option><option value="heart">爱心</option>
     </select>
   </div>
-  <div class="muted">添加后会显示在植物主页的快捷卡片中，可随时在「同步与提醒 → 首页快捷卡片」里调整。</div>
+  <div class="muted">活动类型决定交互：过程性会像散步一样计时记录时长；一次性点一下即完成。光合值会计入当日活动加成上限。</div>
   <button class="btn" style="margin-top:12px" onclick="saveCustomAct()">保存</button>
   <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">取消</button>
 </div></div>
@@ -2661,13 +2671,49 @@ const ACT_ICONS={
 };
 const OFFICIAL_ACTS={sun:'晒太阳',water:'喝水',walk:'散步',breathe:'深呼吸',photo:'拍自然'};
 function customById(id){return S.customActs.find(c=>'c'+c.uid===id)}
+/* 自定义活动执行：instant 即时结算；timed 开始/结束计时，按分钟 * ratePerMin */
+function runCustomAct(id){
+  const c=customById(id); if(!c)return;
+  normalizeCustomAct(c);
+  if(c.type==='timed'){
+    const st=customTimerState(id);
+    if(st.timer){
+      const ms=Date.now()-st.start;
+      const min=Math.max(1,Math.round(ms/60000));
+      clearInterval(st.timer); st.timer=null;
+      st.doneMin=min;
+      const gain=Math.max(0,Math.round(min*(+c.ratePerMin||1)));
+      addGain(gain, c.name+' '+min+' 分钟');
+      renderActs();
+      return;
+    }
+    st.start=Date.now(); st.doneMin=0;
+    st.timer=setInterval(()=>{
+      const node=document.getElementById('act-'+id)||document.querySelector(`.act[onclick*="${id}"]`);
+      const small=document.getElementById('actT-'+id);
+      if(small)small.textContent=fmt(Date.now()-st.start);
+    },250);
+    toast('开始「'+c.name+'」· 结束后按 '+c.ratePerMin+' 光合/分钟结算');
+    renderActs();
+    return;
+  }
+  /* 一次性 */
+  const gain=Math.max(0,Math.round(+c.ratePerOnce||1));
+  addGain(gain, c.name);
+}
 function actSub(id){
   if(id==='sun')return sunTimer?'进行中':(S.today.sunMin?S.today.sunMin+' 分钟':'点击开始');
   if(id==='water')return S.today.waterMl?S.today.waterMl+' ml':'记一杯';
   if(id==='walk')return walkTimer?'进行中':(S.today.walkMin?S.today.walkMin+' 分钟':'点击开始');
   if(id==='breathe')return '3 次';
   if(id==='photo')return '今日 '+Math.min(todayRecs().length,3)+'/3';
-  const c=customById(id);return c?c.name:'';
+  const c=customById(id);
+  if(!c)return '';
+  const st=customTimerState(id);
+  if(c.type==='timed'){
+    return st.timer?fmt(Date.now()-st.start):(st.doneMin?st.doneMin+' 分钟':'点击开始');
+  }
+  return c.ratePerOnce? '每次 +'+c.ratePerOnce : '点击完成';
 }
 function renderActs(){
   const moonIco='<svg class="lock-moon" viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8.5 8.5 0 019.5 4 7 7 0 1020 14.5z" fill="rgba(170,195,230,.85)"/></svg>';
@@ -2680,7 +2726,10 @@ function renderActs(){
     const sub=lockSun
       ? '夜间不可用'
       : actSub(id);
-    return `<div class="act${lockSun?' locked':''}" ${id==='sun'?'id="actSun"':(id==='walk'?'id="actWalk"':'')} onclick="runAct('${id}')">${icon}<b>${name}</b><small ${smallId}>${sub}</small></div>`;
+    const isCustom=!!c;
+    const domId=isCustom?`id="act-${id}"`:(id==='sun'?'id="actSun"':(id==='walk'?'id="actWalk"':''));
+    const smallDomId=isCustom?`id="actT-${id}"`:smallId;
+    return `<div class="act${lockSun?' locked':''}" ${domId} onclick="runAct('${id}')">${icon}<b>${name}</b><small ${smallDomId}>${sub}</small></div>`;
   }).join('');
 }
 window.runAct=id=>{
@@ -2689,7 +2738,7 @@ window.runAct=id=>{
   else if(id==='walk')toggleWalk();
   else if(id==='breathe')breathe();
   else if(id==='photo')openCamera();
-  else{const c=customById(id);if(c){S.logs.push({t:Date.now(),label:c.name,value:0});save();addGain(1,c.name)}}
+  else{runCustomAct(id)}
 };
 const HOME_ACT_LIMIT=6;                      /* 首页快捷卡最多 6 张 */
 const DEFAULT_ACTS=['sun','water','walk'];   /* 默认提供的三个功能 */
@@ -2700,13 +2749,18 @@ function renderHomeActs(){
     const on=S.homeActs.includes(it.id);
     return `<div class="act-edit">
       <div class="ae-ico">${it.icon}</div>
-      <div class="ae-txt"><b>${it.name}</b><span>${on?'已显示在主页':'未显示'}${it.custom?' · 自定义':''}</span></div>
+      <div class="ae-txt"><b>${it.name}</b><span>${on?'已显示在主页':'未显示'}${it.custom?' · '+(it.typeTxt||'自定义')+' · '+(it.rateTxt||''):''}</span></div>
       ${it.custom?`<button class="ae-btn" data-edit="${it.id}">编辑</button><button class="ae-btn del" data-del="${it.id}">删除</button>`:''}
       <div class="sw ${on?'on':''}" data-act="${it.id}"></div>
     </div>`;
   };
   const defs=DEFAULT_ACTS.map(id=>({id,name:OFFICIAL_ACTS[id],icon:ACT_ICONS[id]}));
-  const customs=S.customActs.map(c=>({id:'c'+c.uid,name:c.name,icon:ACT_ICONS[c.icon]||ACT_ICONS.leaf,custom:true}));
+  const customs=S.customActs.map(c=>{
+      normalizeCustomAct(c);
+      const rateTxt=c.type==='timed'?('每分钟 +'+c.ratePerMin+' 光合'):('每次 +'+c.ratePerOnce+' 光合');
+      const typeTxt=c.type==='timed'?'过程计时':'一次性';
+      return {id:'c'+c.uid,name:c.name,icon:ACT_ICONS[c.icon]||ACT_ICONS.leaf,custom:true,typeTxt,rateTxt};
+    });
   el.innerHTML=defs.map(row).join('')+
     (customs.length?'<div class="tl-day" style="margin-top:var(--sp-2)">自定义活动</div>'+customs.map(row).join(''):'');
   el.querySelectorAll('.sw').forEach(sw=>sw.onclick=()=>{
@@ -2730,16 +2784,58 @@ function renderHomeActs(){
   el.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editCustomAct(b.dataset.edit));
 }
 let editActId=null;                 /* null=新增，否则为正在编辑的自定义活动 id */
+/* ---------- 自定义活动类型 ----------
+   timed   过程性·计时：点开始/结束，按分钟结算光合（如散步）
+   instant 一次性·即时：点一下完成，按次数结算光合（如喝水）
+   光合：timed 用 ratePerMin（每分钟），instant 用 ratePerOnce（每次）
+-------------------------------------- */
+const ACT_TYPES={
+  timed:{key:'timed',label:'过程性 · 计时',rateLabel:'每分钟光合',help:'点「开始」计时，点「结束」按实际分钟数结算光合。',defRate:1},
+  instant:{key:'instant',label:'一次性 · 即时',rateLabel:'每次光合',help:'点一下即完成，按次数结算光合。',defRate:1}
+};
+function normalizeCustomAct(c){
+  if(!c.type)c.type='instant';
+  if(c.ratePerMin==null||isNaN(+c.ratePerMin))c.ratePerMin=1;
+  if(c.ratePerOnce==null||isNaN(+c.ratePerOnce))c.ratePerOnce=1;
+  return c;
+}
+function syncActTypeUI(){
+  const type=($('actType')&&$('actType').value)||'instant';
+  const def=ACT_TYPES[type]||ACT_TYPES.instant;
+  const lab=$('actRateLabel'), help=$('actRateHelp'), rate=$('actRate');
+  if(lab)lab.textContent=def.rateLabel;
+  if(help)help.textContent=def.help;
+  if(rate){
+    if(type==='timed'){ if(!rate.dataset.touched) rate.value=1; }
+    else { if(!rate.dataset.touched) rate.value=1; }
+  }
+}
+window.syncActTypeUI=syncActTypeUI;
+const _customTimers={};
+function customTimerState(id){
+  if(!_customTimers[id])_customTimers[id]={timer:null,start:0,doneMin:0};
+  return _customTimers[id];
+}
 window.addCustomAct=()=>{
   editActId=null;
   $('actName').value=''; $('actIcon').value='leaf';
+  if($('actType'))$('actType').value='timed';
+  if($('actRate')){ $('actRate').value=1; delete $('actRate').dataset.touched; }
+  syncActTypeUI();
   const t=$('sheetActTitle'); if(t)t.textContent='添加自定义活动';
   closeSheet();$('sheetAct').classList.add('on');
 };
 function editCustomAct(id){
   const c=S.customActs.find(x=>'c'+x.uid===id); if(!c)return;
+  normalizeCustomAct(c);
   editActId=id;
   $('actName').value=c.name; $('actIcon').value=c.icon||'leaf';
+  if($('actType'))$('actType').value=c.type||'instant';
+  if($('actRate')){
+    $('actRate').value=(c.type==='timed'?c.ratePerMin:c.ratePerOnce);
+    $('actRate').dataset.touched='1';
+  }
+  syncActTypeUI();
   const t=$('sheetActTitle'); if(t)t.textContent='编辑活动';
   closeSheet();$('sheetAct').classList.add('on');
 }
@@ -2748,14 +2844,22 @@ window.saveCustomAct=()=>{
   const name=$('actName').value.trim();
   if(!name){toast('先给活动起个名字');return}
   const icon=$('actIcon').value;
+  const type=($('actType')&&$('actType').value==='timed')?'timed':'instant';
+  let rate=parseFloat($('actRate')&&$('actRate').value);
+  if(isNaN(rate)||rate<0)rate=1;
+  rate=Math.min(20,Math.round(rate*10)/10);
+  const payload={name,icon,type,
+    ratePerMin:type==='timed'?rate:1,
+    ratePerOnce:type==='instant'?rate:1};
   if(editActId){                                   /* 编辑已有活动 */
     const c=S.customActs.find(x=>'c'+x.uid===editActId);
-    if(c){c.name=name;c.icon=icon}
+    if(c){c.name=payload.name;c.icon=payload.icon;c.type=payload.type;
+      c.ratePerMin=payload.ratePerMin;c.ratePerOnce=payload.ratePerOnce}
     toast('已更新「'+name+'」');
   }else{                                           /* 新增 */
     if(S.homeActs.length>=HOME_ACT_LIMIT){toast(`首页最多放 ${HOME_ACT_LIMIT} 张卡片`);return}
     const uid=Date.now();
-    S.customActs.push({uid,name,icon});
+    S.customActs.push({uid,...payload});
     S.homeActs.push('c'+uid);
     toast('已添加「'+name+'」');
   }
