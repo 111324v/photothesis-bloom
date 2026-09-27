@@ -3775,7 +3775,7 @@ renderChoose(); refresh(); renderRems(); renderActs(); renderHomeActs();
 
 
 
-/* ============ v682：相机按钮可拖（鼠标+触控）松手吸边 ============ */
+/* ============ v683：相机按钮 —— 可拖、可点，轻点开弹窗，拖动吸边 ============ */
 (function(){
   const fab=document.querySelector('.cam-fab'); if(!fab)return;
   fab.style.touchAction='none';
@@ -3794,10 +3794,14 @@ renderChoose(); refresh(); renderRems(); renderActs(); renderHomeActs();
   };
   const onMove=e=>{
     if(!dragging||!BASE)return;
-    if(e.cancelable)e.preventDefault();
     const {x,y}=pt(e);
-    if(Math.abs(x-sx)+Math.abs(y-sy)>4)moved=true;
-    if(!moved)return;
+    if(!moved && Math.abs(x-sx)+Math.abs(y-sy)<6)return;   /* 小幅抖动不算拖 */
+    if(!moved){
+      moved=true;
+      fab.classList.add('dragging');
+      fab.style.transition='none';
+    }
+    if(e.cancelable)e.preventDefault();
     const w=fab.offsetWidth;
     const b=box(), av=document.querySelector('.avatar-btn');
     const yMin=av?(av.getBoundingClientRect().bottom+10):(b.t+80);
@@ -3814,7 +3818,11 @@ renderChoose(); refresh(); renderRems(); renderActs(); renderHomeActs();
     window.removeEventListener('pointermove',onMove);
     window.removeEventListener('pointerup',onUp);
     window.removeEventListener('pointercancel',onUp);
+    window.removeEventListener('touchmove',onMove);
+    window.removeEventListener('touchend',onUp);
+    window.removeEventListener('touchcancel',onUp);
     if(!moved||!BASE){fab.style.transition='';return;}
+    /* 拖动结束：吸到最近侧边；click 会被捕获阶段拦下 */
     const r=fab.getBoundingClientRect(), w=fab.offsetWidth, b=box();
     const toLeft=(r.left+r.width/2)<(b.l+b.r)/2;
     const tx=toLeft?(b.l+12-BASE.l):(b.r-12-w-BASE.l);
@@ -3825,29 +3833,30 @@ renderChoose(); refresh(); renderRems(); renderActs(); renderHomeActs();
   };
   const onDown=e=>{
     if(e.button!=null&&e.button!==0)return;
-    e.preventDefault();
+    /* 不要 preventDefault，否则手机上 click 不会触发，弹窗打不开 */
     const {x,y}=pt(e);
     const r=fab.getBoundingClientRect();
     if(!BASE&&r.width>0)BASE={l:r.left,t:r.top,r:r.right};
     if(BASE)acc={x:r.left-BASE.l,y:r.top-BASE.t};
     dragging=true;moved=false;sx=x;sy=y;
     pid=e.pointerId!=null?e.pointerId:null;
-    fab.classList.add('dragging');
-    fab.style.transition='none';
-    if(pid!=null&&fab.setPointerCapture){
-      try{fab.setPointerCapture(pid);}catch(err){}
-    }
     window.addEventListener('pointermove',onMove,{passive:false});
     window.addEventListener('pointerup',onUp,{passive:true});
     window.addEventListener('pointercancel',onUp,{passive:true});
-    /* 触屏补充监听（部分 WebView） */
     window.addEventListener('touchmove',onMove,{passive:false});
     window.addEventListener('touchend',onUp,{passive:true});
     window.addEventListener('touchcancel',onUp,{passive:true});
+    if(pid!=null&&fab.setPointerCapture){
+      try{fab.setPointerCapture(pid);}catch(err){}
+    }
   };
   fab.addEventListener('pointerdown',onDown);
-  fab.addEventListener('touchstart',onDown,{passive:false});
-  fab.addEventListener('click',e=>{ if(moved){e.stopImmediatePropagation();e.preventDefault();moved=false;} },true);
+  fab.addEventListener('touchstart',onDown,{passive:true});
+  /* 只有真正拖过才拦 click；轻点正常打开弹窗 */
+  fab.addEventListener('click',e=>{
+    if(moved){e.stopImmediatePropagation();e.preventDefault();}
+    moved=false;
+  },true);
   window.addEventListener('resize',()=>{
     const r=fab.getBoundingClientRect(), b=box();
     if(r.width<1||r.right<b.l-20||r.left>b.r+20||r.bottom<b.t-20||r.top>b.b+20){
