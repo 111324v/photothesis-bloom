@@ -167,18 +167,53 @@
 html,body{height:100%;font-family:var(--font-body);background:var(--void);color:var(--c-text)}
 body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--sp-3);padding:var(--sp-4)}
 .chrome{color:var(--glass-txt);font-size:var(--fs-base);text-align:center;line-height:1.5}
-.phone{width:min(430px,100vw);height:min(932px,100vh);border-radius:var(--r-2xl);overflow:hidden;position:relative;background:var(--bezel);box-shadow:0 0 0 3px var(--bezel-edge),0 30px 90px rgba(0,0,0,.55)}
-@media (max-width:480px){.chrome{display:none}.phone{width:100vw;height:100vh;height:100dvh;border-radius:0}}
+.phone{width:min(430px,100vw);height:min(932px,100dvh);border-radius:var(--r-2xl);overflow:hidden;position:relative;background:var(--bezel);box-shadow:0 0 0 3px var(--bezel-edge),0 30px 90px rgba(0,0,0,.55)}
+/* 真机/窄屏：铺满整个视口 */
+@media (max-width:480px){
+  .chrome{display:none!important}
+  .notch{display:none!important}
+  body{padding:0;gap:0;justify-content:stretch;overflow:hidden}
+  .phone{width:100vw;height:100vh;height:var(--app-h,100dvh);border-radius:0;box-shadow:none}
+}
+/* PWA / 主屏 / Fullscreen API：强制满屏 */
+@media (display-mode:standalone),(display-mode:fullscreen){
+  .chrome{display:none!important}
+  .notch{display:none!important}
+  body{padding:0;gap:0;justify-content:stretch;background:#000;overflow:hidden}
+  .phone{width:100vw;height:100vh;height:var(--app-h,100dvh);border-radius:0;box-shadow:none}
+}
+html.is-fullscreen .chrome,html.is-fullscreen .notch{display:none!important}
+html.is-fullscreen body{padding:0;gap:0;justify-content:stretch;background:#000;overflow:hidden}
+html.is-fullscreen .phone{width:100vw;height:100vh;height:var(--app-h,100dvh);border-radius:0;box-shadow:none}
+body{overscroll-behavior:none;-webkit-user-select:none;user-select:none;margin:0;min-height:100dvh}
 .notch{position:absolute;top:var(--sp-3);left:50%;transform:translateX(-50%);width:12px;height:12px;background:var(--notch);border-radius:var(--r-round);z-index:120}
 .screens{position:absolute;inset:0;overflow:hidden}
 .screen{position:absolute;inset:0;display:none}
 .screen.on{display:flex;flex-direction:column}
+/* iPhone XS / 375px 档与矮屏：卡片与底部条收紧 */
+@media (max-width:414px){
+  .choose-card{width:min(272px,76vw);border-width:5px;border-radius:26px}
+  .home-foot{left:var(--sp-3);right:var(--sp-3);bottom:calc(188px + env(safe-area-inset-bottom,0px))}
+  .act-row{left:var(--sp-3);right:var(--sp-3);bottom:calc(92px + env(safe-area-inset-bottom,0px));gap:6px}
+  .act{padding:var(--sp-2) 6px}
+  .act b{font-size:12px}
+  .dock{padding-bottom:calc(var(--sp-3) + env(safe-area-inset-bottom,0px))}
+}
+@media (max-height:700px){
+  .home-foot{bottom:calc(160px + env(safe-area-inset-bottom,0px));padding:var(--sp-2) var(--sp-3)}
+  .act-row{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  .choose-quote{padding-top:calc(var(--sp-6) + 18px);white-space:normal;line-height:1.5}
+}
+.dock{padding-bottom:calc(var(--sp-3) + env(safe-area-inset-bottom,0px))}
+.home-foot{bottom:calc(188px + env(safe-area-inset-bottom,0px))}
+.act-row{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+
 
 .stage-pixel{position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,var(--sky-top) 0%,var(--sky-mid) 28%,var(--field-lt) 52%,var(--field) 72%,var(--field-deep) 100%)}
 /* ---------- 环境系统：昼夜随真实时间 + 雨雪随拍照识别（仅保留一天） ---------- */
 .env-layer{position:absolute;inset:0;z-index:0;pointer-events:none}
 .env-layer.p-day{background:linear-gradient(180deg,var(--sky-top) 0%,var(--sky-mid) 28%,var(--field-lt) 52%,var(--field) 72%,var(--field-deep) 100%)}
-.env-layer.p-evening{background:linear-gradient(180deg,#8a6bb0 0%,#e78a5e 34%,#f4b268 52%,#5c7a52 78%,#3f5c40 100%)}
+.env-layer.p-evening{background:linear-gradient(180deg,#7a62a0 0%,#c97b72 22%,#e8956a 40%,#e8a878 52%,#b8896c 62%,#7a8a5c 74%,#55704c 86%,#3f5c40 100%)}
 .env-layer.p-night{background:linear-gradient(180deg,#0e1a3a 0%,#1c2b57 34%,#27407a 54%,#1e3a55 70%,#17301f 86%,#0f2415 100%)}
 .env-tint{position:absolute;inset:0;z-index:9;pointer-events:none;opacity:0;transition:opacity 1s ease}
 .env-tint.t-evening{opacity:1;background:linear-gradient(180deg,rgba(255,150,60,.10),rgba(120,60,120,.16))}
@@ -227,6 +262,9 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 #s-home.env-night .px-cloud{filter:brightness(.55) saturate(.6);opacity:.5}
 #s-home.env-evening .px-cloud{filter:brightness(.78) saturate(.85) sepia(.18);opacity:.7}
 #s-home.env-night .px-fly{display:none}
+/* 傍晚山丘：暖橄榄灰绿，与夕阳地面过渡协调（不要纯绿） */
+#s-home.env-evening .px-hill{height:24%;background:linear-gradient(180deg,rgba(122,138,92,0) 0%,rgba(122,138,92,.35) 32%,#5c6b46 62%,#3f5038 100%)}
+#s-home.env-evening .home-flora{opacity:.35;filter:sepia(.25) brightness(.75) saturate(.7)}
 #s-home.env-night .px-hill{height:22%;background:linear-gradient(180deg,rgba(23,48,31,0) 0%,rgba(23,48,31,.5) 40%,#0f2415 100%)}
 #s-home.env-night .px-grass{opacity:.4;filter:brightness(.6) saturate(.6)}
 #s-home.env-night .home-flora{opacity:.45;filter:brightness(.65) saturate(.6)}
@@ -408,7 +446,7 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
 .choose-carousel:active{cursor:grabbing}
 .choose-track{display:flex;gap:6px;padding:12px 0 20px;transition:transform .38s cubic-bezier(.32,.72,0,1);will-change:transform}
 /* 卡片规格对齐 SVG 素材：白描边 + 极浅蓝白渐变底，无绿色细边 */
-.choose-card{width:280px;flex-shrink:0;border-radius:30px;border:6px solid #fff;
+.choose-card{width:min(280px,78vw);flex-shrink:0;border-radius:30px;border:6px solid #fff;
   background:linear-gradient(180deg,#e8eefb,#fdfdfd);
   box-shadow:0 10px 30px rgba(0,0,0,.16);cursor:pointer;transition:transform .38s ease,opacity .38s ease;position:relative}
 .choose-card.active{transform:scale(1) rotate(0deg);opacity:1;z-index:3;
@@ -1973,10 +2011,11 @@ input[type=file]{display:none}
 </div></div>
 <div class="sheet" id="sheetCam"><div class="sheet-box">
   <h3>拍摄自然场景</h3>
-  <div class="muted">用于 AI 识别光/水/气/境。</div>
-  <input type="file" id="photoInput" accept="image/*" capture="environment">
-  <button class="btn" style="margin-top:12px" onclick="document.getElementById('photoInput').click()">选择照片 / 相机</button>
-  <button class="btn ghost" style="margin-top:8px" onclick="mockTake()">模拟拍摄</button>
+  <div class="muted">调用系统相机/相册 → AI 识别光、水、气、境四要素。</div>
+  <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none">
+  <button class="btn" style="margin-top:12px" onclick="document.getElementById('photoInput').click()">打开相机拍摄</button>
+  <button class="btn ghost" style="margin-top:8px" onclick="document.getElementById('photoInput').click()">从相册选择</button>
+  <button class="btn ghost" style="margin-top:8px;opacity:.55" onclick="mockTake()">演示用·模拟拍摄</button>
   <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">取消</button>
 </div></div>
 <div class="sheet" id="sheetRem"><div class="sheet-box">
@@ -2484,6 +2523,33 @@ window.saveReminder=()=>{
 
 /* ---------- 拍照光合 ---------- */
 function mockScores(){const p=()=>Math.floor(Math.random()*4);return{light:p(),water:p(),air:p(),biome:p()}}
+/* 真实照片本地四要素：亮度/蓝水/通透/绿色生机，AI 失败时仍基于实拍，不随机瞎给 */
+async function analyzeImage(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url});
+    const w=160,h=Math.max(1,Math.round(160*img.naturalHeight/Math.max(1,img.naturalWidth)));
+    const c=document.createElement('canvas');c.width=w;c.height=h;
+    const x=c.getContext('2d',{willReadFrequently:true});
+    x.drawImage(img,0,0,w,h);
+    const d=x.getImageData(0,0,w,h).data;
+    let r=0,g=0,b=0,lum=0,green=0,blue=0,sky=0,n=w*h;
+    for(let i=0;i<d.length;i+=4){
+      const R=d[i],G=d[i+1],B=d[i+2];
+      r+=R;g+=G;b+=B;
+      lum+=(0.2126*R+0.7152*G+0.0722*B);
+      if(G>R+12&&G>B+12)green++;
+      if(B>R+18&&B>G+8)blue++;
+      if(B>140&&G>140&&R>120)sky++;
+    }
+    const L=lum/n, G=green/n, Bl=blue/n, Sk=sky/n;
+    const light=Math.min(3,Math.max(0,Math.round((L-35)/50)));
+    const water=Math.min(3,Math.max(0,Math.round(Bl*8 + (L>150?1:0))));
+    const air=Math.min(3,Math.max(0,Math.round(Sk*6 + (L>170?1:0))));
+    const biome=Math.min(3,Math.max(0,Math.round(G*10 + (1-Math.abs(r/n-90)/120))));
+    return {light,water,air,biome,weather:'none',_src:'pixel'};
+  }finally{URL.revokeObjectURL(url)}
+}
 window.openCamera=()=>$('sheetCam').classList.add('on');
 window.mockTake=()=>{closeSheet();finishTake(mockScores(),'mock');const r=Math.random();setTimeout(()=>askEnv(r<.25?'rain':(r<.4?'snow':'none')),1200)};
 function finishTake(sc,mode){
@@ -2497,7 +2563,7 @@ function finishTake(sc,mode){
   save();
   $('scTotal').textContent='+'+value;
   $('scL').textContent=sc.light;$('scW').textContent=sc.water;$('scA').textContent=sc.air;$('scB').textContent=sc.biome;
-  $('scMode').textContent=mode==='ai'?'AI':'模拟';
+  $('scMode').textContent=mode==='ai'?'AI 视觉':mode==='pixel'?'图像分析':'模拟';
   $('scMeta').textContent='均衡 '+diversity().toFixed(2)+' · 累计 '+S.total;
   $('sheetScore').classList.add('on');
   refresh();
@@ -2505,18 +2571,35 @@ function finishTake(sc,mode){
 }
 $('photoInput')?.addEventListener('change',async e=>{
   const f=e.target.files&&e.target.files[0];e.target.value='';
-  if(!f)return; closeSheet(); toast('AI 识别中…');
-  let sc,mode='mock',w='none';
-  if(S.api.key&&S.api.key.length>8){try{sc=await ai(f);mode='ai';w=sc.weather||'none'}catch(err){console.warn(err);toast('AI 失败，改模拟');sc=mockScores()}}
-  else{await new Promise(r=>setTimeout(r,500));sc=mockScores();const rr=Math.random();w=rr<.25?'rain':(rr<.4?'snow':'none')}
+  if(!f)return; closeSheet(); toast('AI 识别照片中…');
+  let sc,mode='pixel',w='none';
+  /* 1) 优先真实视觉 API  2) 失败则基于实拍像素分析  3) 再不行才模拟（仅演示按钮） */
+  if(S.api.key&&S.api.key.length>8){
+    try{sc=await ai(f);mode='ai';w=sc.weather||'none';toast('AI 识别完成')}
+    catch(err){
+      console.warn('AI API 失败，改本地图像分析',err);
+      try{sc=await analyzeImage(f);mode='pixel';toast('已用本地图像分析打分')}
+      catch(e2){console.warn(e2);sc=mockScores();mode='mock'}
+    }
+  }else{
+    try{sc=await analyzeImage(f);mode='pixel';toast('已用本地图像分析打分')}
+    catch(e2){sc=mockScores();mode='mock'}
+  }
   finishTake(sc,mode);
   setTimeout(()=>askEnv(w),1200);
 });
 async function ai(file){
-  const b64=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]);fr.onerror=rej;fr.readAsDataURL(file)});
+  /* 压到 ≤720px，降低流量并提高识别稳定性 */
+  const img=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=fr.result};fr.onerror=rej;fr.readAsDataURL(file)});
+  const scale=Math.min(1,720/Math.max(img.naturalWidth,img.naturalHeight));
+  const cw=Math.max(1,Math.round(img.naturalWidth*scale)),ch=Math.max(1,Math.round(img.naturalHeight*scale));
+  const cv=document.createElement('canvas');cv.width=cw;cv.height=ch;
+  cv.getContext('2d').drawImage(img,0,0,cw,ch);
+  const b64=cv.toDataURL('image/jpeg',0.82).split(',')[1];
+  const prompt='你是植物养成游戏的自然照片评分器。请根据这张自然环境照片，对四个维度打整数分0-3：\n- light 光照充足度（阳光/明亮=高）\n- water 水分感（水体/湿润/露珠=高）\n- air 空气通透度（开阔/晴朗/蓝天=高）\n- biome 生态丰富度（植物多样/绿意=高）\n- weather 只能是 none|rain|snow\n只输出JSON，例如 {"light":2,"water":1,"air":3,"biome":2,"weather":"none"}';
   const res=await fetch(S.api.url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+S.api.key},
-    body:JSON.stringify({model:S.api.model,max_tokens:80,temperature:.3,messages:[
-      {role:'system',content:'对照片四要素打分0-3：光light、水water、气air、境biome。只输出JSON'},
+    body:JSON.stringify({model:S.api.model,max_tokens:120,temperature:.2,messages:[
+      {role:'system',content:prompt},
       {role:'user',content:[{type:'image_url',image_url:{url:'data:image/jpeg;base64,'+b64,detail:'low'}},{type:'text',text:'只输出JSON'}]}
     ]})});
   if(!res.ok)throw new Error('HTTP'+res.status);
@@ -2525,7 +2608,6 @@ async function ai(file){
   const c=x=>Math.min(3,Math.max(0,Math.round(+x||0)));
   return{light:c(o.light),water:c(o.water),air:c(o.air),biome:c(o.biome),weather:o.weather||'none'};
 }
-
 function renderColl(){
   const left=Math.max(0,FULL-S.total);
   const days=Math.ceil(left/24);
@@ -3471,6 +3553,51 @@ window.__canBox=()=>{
   el.addEventListener('dragstart',e=>e.preventDefault());
 })();
 
+</script>
+
+<script>
+(function(){
+  function isStandalone(){
+    return window.matchMedia('(display-mode:standalone), (display-mode:fullscreen)').matches
+      || window.navigator.standalone === true;
+  }
+  function syncVH(){
+    const h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    document.documentElement.style.setProperty('--app-h', h + 'px');
+  }
+  syncVH();
+  window.addEventListener('resize', syncVH);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', syncVH);
+
+  window.__enterFullscreen = function(){
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if (req) {
+      Promise.resolve(req.call(el)).then(()=>document.documentElement.classList.add('is-fullscreen')).catch(()=>{});
+      return;
+    }
+    /* iOS Safari 网页无法 JS 全屏 → 引导添加到主屏（可全屏） */
+    if (!isStandalone()) {
+      const tip = document.createElement('div');
+      tip.style.cssText = 'position:fixed;left:50%;bottom:28%;transform:translateX(-50%);z-index:9999;max-width:86%;padding:14px 18px;border-radius:16px;background:rgba(20,32,24,.92);color:#fff;font-size:14px;line-height:1.55;text-align:center;box-shadow:0 12px 32px rgba(0,0,0,.35)';
+      tip.innerHTML = 'Safari 网页无法完全隐藏地址栏。<br><b>点分享按钮 →「添加到主屏」</b><br>再打开即可全屏当 App 用。';
+      document.body.appendChild(tip);
+      tip.addEventListener('click', ()=>tip.remove());
+      setTimeout(()=>tip.remove(), 5000);
+    }
+  };
+  document.addEventListener('fullscreenchange', ()=>{
+    document.documentElement.classList.toggle('is-fullscreen', !!document.fullscreenElement);
+  });
+  document.addEventListener('webkitfullscreenchange', ()=>{
+    document.documentElement.classList.toggle('is-fullscreen', !!document.webkitFullscreenElement);
+  });
+  let tried=false;
+  window.addEventListener('pointerdown', function tryFs(){
+    if (tried || isStandalone()) return;
+    if (window.innerWidth <= 480) { tried=true; window.__enterFullscreen(); }
+  }, { once:true });
+})();
 </script>
 </body>
 </html>

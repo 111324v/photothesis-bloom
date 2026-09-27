@@ -3,8 +3,8 @@
   "appName": "光合作用",
   "webDir": "www",
   "ios": {
-    "contentInset": "always",
+    "contentInset": "never",
     "backgroundColor": "#f6efe5",
-    "scheme": "光合作用"
+    "scheme": "photosynthesis"
   }
 }
