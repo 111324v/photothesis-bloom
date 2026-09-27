@@ -573,7 +573,10 @@ body.in-standalone .status{display:none!important}
 
 /* 二级页：与主页同一套清新绿调（渐变天幕 + 底部草地），不再是纯黄底 */
 .sub{position:absolute;inset:0;z-index:var(--z-page);display:none;flex-direction:column;
-  background:linear-gradient(180deg,var(--sky-mid) 0%,#cfeedf 42%,var(--mint-200) 72%,var(--leaf-mid) 100%)}
+  background:
+    radial-gradient(120% 55% at 50% -8%, rgba(255,205,120,.12), transparent 55%),
+    radial-gradient(90% 50% at 88% 10%, rgba(120,220,160,.10), transparent 50%),
+    linear-gradient(180deg,#e7f3ee 0%,#f3faf6 28%,#fbfcf9 52%,#eef6f0 78%,#e4f0e8 100%)}
 .sub.on{display:flex}
 .sub-hd{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-4) var(--sp-4) var(--sp-2)}
 .sub-hd h2{font-family:var(--font-disp);font-size:var(--fs-4xl);font-weight:var(--fw-black);color:var(--ink);text-shadow:0 1px 0 rgba(255,255,255,.55)}
@@ -1966,6 +1969,17 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#e8f2ec}
   .notch{display:none!important}
   body{padding:0;gap:0;justify-content:stretch;overflow:hidden}
 }
+
+/* v677：子页底部不再露出绿色色条 —— 浅色面板铺满，渐变只做柔光 */
+.sub{background:
+  radial-gradient(120% 55% at 50% -8%, rgba(255,205,120,.10), transparent 55%),
+  linear-gradient(180deg,#e7f3ee 0%,#f4faf6 30%,#fcfcfa 55%,#f0f7f2 78%,#e9f3ec 100%)!important}
+.sub .body{background:transparent}
+#s-collection .body,#s-pot .pot-wrap,#s-sync .body,#s-diary .body,#s-profile .body{
+  min-height:100%;
+}
+/* 内容区左右/底部内边距吃安全区，不靠背景色遮丑 */
+.sub{padding-bottom:env(safe-area-inset-bottom,0px)}
 </style>
 </head>
 <body>
