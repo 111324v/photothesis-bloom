@@ -3931,7 +3931,8 @@ function closePot(){ if(potMode==='onboard') show('s-choose'); else { show('s-ho
 function renderPot(){const el=$('potLayer');if(el)el.innerHTML='';if(window.setPot3D)window.setPot3D(S.pot);}
 /* ---------- 环境系统：白天/傍晚/夜晚随真实时间；雨/雪由拍照识别，仅保留一天 ---------- */
 const todayKey=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
-function envPhase(){const h=new Date().getHours()+new Date().getMinutes()/60;
+function envPhase(){return 'day'; /* TEMP-FORCE-DAY — 临时固定白天，改回时删掉本行 return，恢复下面按时间判定 */
+  const h=new Date().getHours()+new Date().getMinutes()/60;
   return h>=6&&h<17?'day':(h>=17&&h<19.5?'evening':'night')}
 function envWeather(){return (S.env&&S.env.date===todayKey())?S.env.type:null}
 function applyEnv(){
