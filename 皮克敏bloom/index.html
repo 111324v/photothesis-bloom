@@ -2840,11 +2840,7 @@ body.in-standalone .phone {
       <span><b id="scB">0</b><em>境</em></span>
     </div>
     <div class="ss-meta" id="scMeta"></div>
-    <button class="btn ss-cta" onclick="closeSheet(){
-  try{document.documentElement.classList.remove('score-sheet-open');}catch(e){}
-  return closeSheetImpl&&closeSheetImpl();
-}
-function closeSheetImpl()">让它接着长</button>
+    <button class="btn ss-cta" onclick="closeSheet()">让它接着长</button>
   </div>
 </div></div>
 <div class="sheet" id="sheetReward"><div class="sheet-box">
@@ -2867,11 +2863,7 @@ function closeSheetImpl()">让它接着长</button>
   <input type="file" id="photoInputAlbum" accept="image/*" style="display:none">
   <button class="btn" style="margin-top:12px" onclick="document.getElementById('photoInputCam').click()">打开相机拍摄</button>
   <button class="btn ghost" style="margin-top:8px" onclick="document.getElementById('photoInputAlbum').click()">从相册选择</button>
-  <button class="btn ghost" style="margin-top:8px" onclick="closeSheet(){
-  try{document.documentElement.classList.remove('score-sheet-open');}catch(e){}
-  return closeSheetImpl&&closeSheetImpl();
-}
-function closeSheetImpl()">取消</button>
+  <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">取消</button>
 </div></div>
 <div class="sheet" id="sheetRem"><div class="sheet-box">
   <h3>添加提醒</h3>
@@ -2884,11 +2876,7 @@ function closeSheetImpl()">取消</button>
   </div>
   <div class="field"><label>植物口吻文案（可改）</label><input id="remVoice" type="text" placeholder="一起去晒太阳吧"></div>
   <button class="btn" style="margin-top:12px" onclick="saveReminder()">保存提醒</button>
-  <button class="btn ghost" style="margin-top:8px" onclick="closeSheet(){
-  try{document.documentElement.classList.remove('score-sheet-open');}catch(e){}
-  return closeSheetImpl&&closeSheetImpl();
-}
-function closeSheetImpl()">取消</button>
+  <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">取消</button>
 </div></div>
 <div class="sheet" id="sheetAct"><div class="sheet-box">
   <h3 id="sheetActTitle">添加自定义活动</h3>
@@ -2911,11 +2899,7 @@ function closeSheetImpl()">取消</button>
   </div>
   <div class="muted">活动类型决定交互：过程性会像散步一样计时记录时长；一次性点一下即完成。光合值会计入当日活动加成上限。</div>
   <button class="btn" style="margin-top:12px" onclick="saveCustomAct()">保存</button>
-  <button class="btn ghost" style="margin-top:8px" onclick="closeSheet(){
-  try{document.documentElement.classList.remove('score-sheet-open');}catch(e){}
-  return closeSheetImpl&&closeSheetImpl();
-}
-function closeSheetImpl()">取消</button>
+  <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">取消</button>
 </div></div>
 <div class="pick-mask" id="pickMask" onclick="closePlantPicker()"><div class="pick-sheet" onclick="event.stopPropagation()">
   <div class="pick-hd"><span class="sec-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" stroke-linecap="round"/></svg></span>领养新植物</div>
@@ -2937,11 +2921,7 @@ function closeSheet(){
   return closeSheetImpl&&closeSheetImpl();
 }
 function closeSheetImpl(){document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('on'))}
-document.querySelectorAll('.sheet').forEach(sh=>sh.addEventListener('click',e=>{if(e.target===sh)closeSheet(){
-  try{document.documentElement.classList.remove('score-sheet-open');}catch(e){}
-  return closeSheetImpl&&closeSheetImpl();
-}
-function closeSheetImpl()}));
+document.querySelectorAll('.sheet').forEach(sh=>sh.addEventListener('click',e=>{if(e.target===sh)closeSheet()}));
 window.show=show;window.openSub=openSub;window.closeSub=closeSub;window.closeSheet=closeSheet;
 
 const KEY='ps_bloom_v3';
@@ -3452,11 +3432,7 @@ window.addCustomAct=()=>{
   if($('actRate')){ $('actRate').value=1; delete $('actRate').dataset.touched; }
   syncActTypeUI();
   const t=$('sheetActTitle'); if(t)t.textContent='添加自定义活动';
-  closeSheet(){
-  try{document.documentElement.classList.remove('score-sheet-open');}catch(e){}
-  return closeSheetImpl&&closeSheetImpl();
-}
-function closeSheetImpl();$('sheetAct').classList.add('on');
+  closeSheet();$('sheetAct').classList.add('on');
 };
 function editCustomAct(id){
   const c=S.customActs.find(x=>'c'+x.uid===id); if(!c)return;
@@ -3470,11 +3446,7 @@ function editCustomAct(id){
   }
   syncActTypeUI();
   const t=$('sheetActTitle'); if(t)t.textContent='编辑活动';
-  closeSheet(){
-  try{document.documentElement.classList.remove('score-sheet-open');}catch(e){}
-  return closeSheetImpl&&closeSheetImpl();
-}
-function closeSheetImpl();$('sheetAct').classList.add('on');
+  closeSheet();$('sheetAct').classList.add('on');
 }
 window.editCustomAct=editCustomAct;
 window.saveCustomAct=()=>{
@@ -3501,11 +3473,7 @@ window.saveCustomAct=()=>{
     toast('已添加「'+name+'」');
   }
   editActId=null;
-  save();closeSheet(){
-  try{document.documentElement.classList.remove('score-sheet-open');}catch(e){}
-  return closeSheetImpl&&closeSheetImpl();
-}
-function closeSheetImpl();renderHomeActs();renderActs();
+  save();closeSheet();renderHomeActs();renderActs();
 };
 
 /* ---------- 提醒 ---------- */
@@ -3523,11 +3491,7 @@ function renderRems(){
     sw.onclick=()=>{const i=+sw.dataset.i;S.reminders[i].enabled=!S.reminders[i].enabled;save();renderRems()};
   });
 }
-window.addReminder=()=>{closeSheet(){
-  try{document.documentElement.classList.remove('score-sheet-open');}catch(e){}
-  return closeSheetImpl&&closeSheetImpl();
-}
-function closeSheetImpl();$('sheetRem').classList.add('on')};
+window.addReminder=()=>{closeSheet();$('sheetRem').classList.add('on')};
 window.saveReminder=()=>{
   const kind=$('remKind').value;
   const t=($('remTime').value||'15:00').split(':');
@@ -3542,11 +3506,7 @@ window.saveReminder=()=>{
       rest:'该休息了，明天见',
     })[kind]
   });
-  save(); closeSheet(){
-  try{document.documentElement.classList.remove('score-sheet-open');}catch(e){}
-  return closeSheetImpl&&closeSheetImpl();
-}
-function closeSheetImpl(); openSub('s-sync'); toast('已添加提醒');
+  save(); closeSheet(); openSub('s-sync'); toast('已添加提醒');
 };
 
 /* ---------- 拍照光合 ---------- */
@@ -3601,11 +3561,7 @@ async function analyzeImage(file){
   }finally{URL.revokeObjectURL(url)}
 }
 window.openCamera=()=>$('sheetCam').classList.add('on');
-window.mockTake=()=>{closeSheet(){
-  try{document.documentElement.classList.remove('score-sheet-open');}catch(e){}
-  return closeSheetImpl&&closeSheetImpl();
-}
-function closeSheetImpl();finishTake(mockScores(),'mock');const r=Math.random();setTimeout(()=>askEnv(r<.25?'rain':(r<.4?'snow':'none')),1200)};
+window.mockTake=()=>{closeSheet();finishTake(mockScores(),'mock');const r=Math.random();setTimeout(()=>askEnv(r<.25?'rain':(r<.4?'snow':'none')),1200)};
 function scoreSparksUnused(){
   const box=$('scSpark'); if(!box)return;
   box.innerHTML='';
@@ -3663,18 +3619,10 @@ function finishTake(sc,mode,photoUrl){
   }
   $('sheetScore').classList.add('on');
   refresh();
-  if(S.total>=FULL&&!S.reward)setTimeout(()=>{closeSheet(){
-  try{document.documentElement.classList.remove('score-sheet-open');}catch(e){}
-  return closeSheetImpl&&closeSheetImpl();
-}
-function closeSheetImpl();$('sheetReward').classList.add('on')},700);
+  if(S.total>=FULL&&!S.reward)setTimeout(()=>{closeSheet();$('sheetReward').classList.add('on')},700);
 }
 async function handlePhotoFile(f){
-  if(!f)return; closeSheet(){
-  try{document.documentElement.classList.remove('score-sheet-open');}catch(e){}
-  return closeSheetImpl&&closeSheetImpl();
-}
-function closeSheetImpl(); toast('AI 识别照片中…');
+  if(!f)return; closeSheet(); toast('AI 识别照片中…');
   try{window.__lastPhotoURL=URL.createObjectURL(f)}catch(e){}
   let sc,mode='pixel',w='none';
   if(S.api.key&&S.api.key.length>8){
@@ -4273,11 +4221,7 @@ function renderProfile(){
 }
 window.saveNick=()=>{S.name=($('nickIn').value||'自然爱好者').trim();save();toast('昵称已保存')};
 window.toggleSound=()=>{S.sound=!S.sound;$('swSound').classList.toggle('on',S.sound);save();toast(S.sound?'音效已开启':'音效已关闭')};
-window.claim=()=>{S.reward=true;save();toast('已领取');closeSheet(){
-  try{document.documentElement.classList.remove('score-sheet-open');}catch(e){}
-  return closeSheetImpl&&closeSheetImpl();
-}
-function closeSheetImpl();openSub('s-collection')};
+window.claim=()=>{S.reward=true;save();toast('已领取');closeSheet();openSub('s-collection')};
 
 // 启动
 renderChoose(); refresh(); renderRems(); renderActs(); renderHomeActs();
