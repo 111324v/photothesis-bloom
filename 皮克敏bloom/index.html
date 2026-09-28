@@ -3547,6 +3547,19 @@ window.saveReminder=()=>{
 
 /* ---------- 拍照光合 ---------- */
 function mockScores(){const p=()=>Math.floor(Math.random()*4);return{light:p(),water:p(),air:p(),biome:p()}}
+/* 天气字符串归一化：兼容 AI 中英文/大小写/口语描述 */
+function normWeather(v){
+  const s=String(v==null?'':v).toLowerCase().trim();
+  if(!s||s==='none'||s==='unknown') return null;
+  if(/rain|雨|shower|storm|drizzle|阵雨|暴雨|小雨|中雨|大雨/.test(s)) return 'rain';
+  if(/snow|雪|blizzard|积雪|下雪|雪天|暴风雪/.test(s)) return 'snow';
+  if(/sun|晴|clear|sunny|fine|晴天|晴朗|多云/.test(s)) return 'sun';
+  return null;
+}
+function weatherFromName(name){
+  if(!name) return null;
+  return normWeather(name.toLowerCase());
+}
 /* 真实照片本地四要素：亮度/蓝水/通透/绿色生机，AI 失败时仍基于实拍，不随机瞎给 */
 async function analyzeImage(file){
   const url=URL.createObjectURL(file);
@@ -3571,28 +3584,45 @@ async function analyzeImage(file){
     const water=Math.min(3,Math.max(0,Math.round(Bl*8 + (L>150?1:0))));
     const air=Math.min(3,Math.max(0,Math.round(Sk*6 + (L>170?1:0))));
     const biome=Math.min(3,Math.max(0,Math.round(G*10 + (1-Math.abs(r/n-90)/120))));
-    /* 粗分天气：暗+高对比雨丝感→雨；大面积高亮冷白→雪；其余→晴 */
+    /* 天气：雨丝/阴湿灰暗→雨；高亮低饱和冷白→雪；其余→晴。阈值放宽，优先避免误报晴 */
     let weather='sun';
-    /* 雨丝：暗背景下大量局部高对比亮线 */
-    let streaks=0, brightPx=0, darkPx=0;
+    let streaks=0, brightPx=0, darkPx=0, whitePx=0, grayPx=0, satSum=0, samples=0;
     for(let y=1;y<h-1;y+=2){
       for(let x=1;x<w-1;x+=2){
+        samples++;
         const i=(y*w+x)*4;
-        const Lp=0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2];
+        const R=d[i],Gp=d[i+1],Bp=d[i+2];
+        const Lp=0.2126*R+0.7152*Gp+0.0722*Bp;
+        const sat=Math.max(R,Gp,Bp)-Math.min(R,Gp,Bp);
+        satSum+=sat;
         const iu=((y-1)*w+x)*4, id=((y+1)*w+x)*4;
+        const il=(y*w+x-1)*4, ir=(y*w+x+1)*4;
         const Lu=0.2126*d[iu]+0.7152*d[iu+1]+0.0722*d[iu+2];
         const Ld=0.2126*d[id]+0.7152*d[id+1]+0.0722*d[id+2];
+        const Ll=0.2126*d[il]+0.7152*d[il+1]+0.0722*d[il+2];
+        const Lr=0.2126*d[ir]+0.7152*d[ir+1]+0.0722*d[ir+2];
         if(Lp>140) brightPx++;
         if(Lp<50) darkPx++;
-        /* 细长亮条：自身亮、上下一端暗 */
-        if(Lp>110 && (Lu<70 || Ld<70) && Math.abs(Lu-Ld)>40) streaks++;
+        if(Lp>190&&sat<30) whitePx++;
+        if(Lp>85&&Lp<185&&sat<28) grayPx++;
+        if(Lp>105 && (Lu<75 || Ld<75) && Math.abs(Lu-Ld)>32) streaks++;
+        if(Lp>105 && (Ll<75 || Lr<75) && Math.abs(Ll-Lr)>32) streaks++;
       }
     }
-    const dark=L<95, bright=L>155, cold=b>=r+8;
-    const rainLike=(dark&&streaks>15)||(L<85&&streaks>8)||(streaks>40&&darkPx>brightPx);
+    const npx=Math.max(1,samples);
+    const brightRatio=brightPx/npx, whiteRatio=whitePx/npx, grayRatio=grayPx/npx;
+    const avgSat=satSum/npx;
+    const dark=L<115, veryDark=L<95;
+    const bright=L>135;
+    const cold=b>=r+2;
+    const overcast=grayRatio>0.18&&avgSat<36;
+    const rainLike=(dark&&streaks>10)||(L<100&&streaks>5)||(streaks>22)||
+      (overcast&&streaks>4)||(veryDark&&avgSat<32)||(overcast&&L<120&&Sk<0.12);
+    const snowLike=(whiteRatio>0.14&&avgSat<32)||(bright&&cold&&whiteRatio>0.08&&L>140)||
+      (whiteRatio>0.22&&L>145)||(bright&&whiteRatio>0.12&&avgSat<26);
     if(rainLike) weather='rain';
-    else if(bright&&cold&&L>160) weather='snow';
-    else if(dark&&Bl>0.03) weather='rain';
+    else if(snowLike) weather='snow';
+    else if(overcast&&dark) weather='rain';
     return {light,water,air,biome,weather,_src:'pixel'};
   }finally{URL.revokeObjectURL(url)}
 }
@@ -3666,26 +3696,32 @@ function finishTake(sc,mode,photoUrl){
 async function handlePhotoFile(f){
   if(!f)return; closeSheet(); toast('AI 识别照片中…');
   try{window.__lastPhotoURL=URL.createObjectURL(f)}catch(e){}
-  let sc,mode='pixel',w='sun';
+  let sc=null,mode='pixel';
+  let aiW=null, pixW=null;
+  /* 本地像素始终跑一遍，作为天气仲裁（AI 容易把雨雪误报成晴） */
+  try{
+    const pix=await analyzeImage(f);
+    pixW=normWeather(pix.weather)||'sun';
+    sc=pix; mode='pixel';
+  }catch(e2){console.warn(e2);sc=mockScores();mode='mock';pixW='sun'}
   if(S.api.key&&S.api.key.length>8){
-    try{sc=await ai(f);mode='ai';w=sc.weather||'sun';if(!document.documentElement.classList.contains('score-sheet-open'))toast('AI 识别完成')}
-    catch(err){
-      console.warn('AI API 失败，改本地图像分析',err);
-      try{sc=await analyzeImage(f);mode='pixel';w=sc.weather||'sun';if(!document.documentElement.classList.contains('score-sheet-open'))toast('已用本地图像分析打分')}
-      catch(e2){console.warn(e2);sc=mockScores();mode='mock';w='sun'}
-    }
-  }else{
-    try{sc=await analyzeImage(f);mode='pixel';w=sc.weather||'sun';if(!document.documentElement.classList.contains('score-sheet-open'))toast('已用本地图像分析打分')}
-    catch(e2){sc=mockScores();mode='mock';w='sun'}
+    try{
+      const got=await ai(f);
+      sc={...got,_src:'ai'};
+      mode='ai';
+      aiW=normWeather(got.weather);
+    }catch(err){console.warn('AI API 失败，保留本地图像分析',err)}
   }
-  /* 文件名兜底：相册里命名为雨天/雪天/晴天也能识别 */
-  if((!w||w==='none')&&f&&f.name){
-    const n=f.name.toLowerCase();
-    if(/雨|rain|shower|storm/.test(n)) w='rain';
-    else if(/雪|snow|blizzard/.test(n)) w='snow';
-    else if(/晴|sun|clear|sunny/.test(n)) w='sun';
+  if(!document.documentElement.classList.contains('score-sheet-open')){
+    toast(mode==='ai'?'AI 识别完成':mode==='pixel'?'已用本地图像分析打分':'已用演示数据');
   }
-  if(!w||w==='none') w='sun';
+  /* 文件名兜底：相册命名为雨天/雪天/晴天时以文件名为准 */
+  const fnW=weatherFromName(f&&f.name);
+  let w='sun';
+  if(fnW) w=fnW;
+  else if(aiW==='rain'||aiW==='snow') w=aiW;
+  else if(pixW==='rain'||pixW==='snow') w=pixW;
+  else w=aiW||pixW||'sun';
   let photoUrl=''; try{photoUrl=URL.createObjectURL(f);}catch(e){}
   finishTake(sc,mode,photoUrl);
   setTimeout(()=>askEnv(w),900);
@@ -3706,18 +3742,18 @@ async function ai(file){
   const cv=document.createElement('canvas');cv.width=cw;cv.height=ch;
   cv.getContext('2d').drawImage(img,0,0,cw,ch);
   const b64=cv.toDataURL('image/jpeg',0.82).split(',')[1];
-  const prompt='你是植物养成游戏的自然照片评分器。请根据这张自然环境照片，对四个维度打整数分0-3：\n- light 光照充足度（阳光/明亮=高）\n- water 水分感（水体/湿润/露珠=高）\n- air 空气通透度（开阔/晴朗/蓝天=高）\n- biome 生态丰富度（植物多样/绿意=高）\n- weather 只能是 sun|rain|snow（晴天/晴朗= sun，下雨= rain，下雪= snow）\n只输出JSON，例如 {"light":2,"water":1,"air":3,"biome":2,"weather":"sun"}';
+  const prompt='你是植物养成游戏的自然照片天气与评分器。\n【天气最优先】先判断真实天气，宁可多报 rain/snow，也不要误报 sun：\n- rain：下雨、雨丝、雨滴、湿地反光、乌云、灰蒙蒙阴雨\n- snow：下雪、积雪、雪地、白茫茫、雪花\n- sun：明确晴天、蓝天、阳光明媚、无雨无雪\nweather 只能填小写英文 "sun" / "rain" / "snow"。画面偏暗、灰、湿、白时优先 rain 或 snow，禁止默认 sun。\n\n四维打 0-3 整数：\n- light 光照充足度（阳光/明亮=高）\n- water 水分感（水体/湿润/雨雪=高）\n- air 空气通透度（开阔/晴朗=高）\n- biome 生态丰富度（植物多样/绿意=高）\n\n只输出 JSON：{"light":0,"water":0,"air":0,"biome":0,"weather":"rain"}';
   const res=await fetch(S.api.url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+S.api.key},
-    body:JSON.stringify({model:S.api.model,max_tokens:120,temperature:.2,messages:[
+    body:JSON.stringify({model:S.api.model,max_tokens:160,temperature:.15,messages:[
       {role:'system',content:prompt},
-      {role:'user',content:[{type:'image_url',image_url:{url:'data:image/jpeg;base64,'+b64,detail:'low'}},{type:'text',text:'只输出JSON'}]}
+      {role:'user',content:[{type:'image_url',image_url:{url:'data:image/jpeg;base64,'+b64,detail:'high'}},{type:'text',text:'仔细看画面里的天空、地面湿度、雨丝、积雪。只输出JSON，weather 必须是 sun/rain/snow 之一。'}]}
     ]})});
   if(!res.ok)throw new Error('HTTP'+res.status);
   const t=(await res.json()).choices?.[0]?.message?.content||'';
   const o=JSON.parse((t.match(/\{[\s\S]*\}/)||['{}'])[0]);
   const c=x=>Math.min(3,Math.max(0,Math.round(+x||0)));
-  const wt=o.weather==='rain'||o.weather==='snow'?o.weather:'sun';
-  return{light:c(o.light),water:c(o.water),air:c(o.air),biome:c(o.biome),weather:wt};
+  const wt=normWeather(o.weather)||normWeather(t)||null;
+  return{light:c(o.light),water:c(o.water),air:c(o.air),biome:c(o.biome),weather:wt||'sun'};
 }
 function renderColl(){
   const left=Math.max(0,FULL-S.total);
