@@ -2271,6 +2271,20 @@ body.in-standalone .phone {
   -webkit-mask-image:none!important;mask-image:none!important;
 }
 .sun-badge img{-webkit-mask-image:none!important;mask-image:none!important}
+
+/* v691：表情只露中心笑脸，不与 sun-rays 光晕重叠 */
+.sun-badge .sun-face{
+  position:absolute;left:9px;top:9px;width:40px;height:40px;
+  border-radius:50%;overflow:hidden;pointer-events:none;z-index:2;
+}
+.sun-badge .sun-face img{
+  position:absolute;left:50%;top:50%;
+  width:96px;height:96px;max-width:none;max-height:none;
+  margin:0;transform:translate(-50%,-50%);
+  object-fit:contain;animation:none!important;filter:none!important;
+  -webkit-mask-image:none!important;mask-image:none!important;
+}
+.sun-badge .sun-rays{z-index:1}
 </style>
 </head>
 <body>
@@ -3247,9 +3261,26 @@ async function analyzeImage(file){
     const biome=Math.min(3,Math.max(0,Math.round(G*10 + (1-Math.abs(r/n-90)/120))));
     /* 粗分天气：暗+高对比雨丝感→雨；大面积高亮冷白→雪；其余→晴 */
     let weather='none';
-    const dark=L<70, bright=L>150, cold=b>=r+10;
-    if(dark&&Bl>0.02) weather='rain';
-    else if(bright&&cold) weather='snow';
+    /* 雨丝：暗背景下大量局部高对比亮线 */
+    let streaks=0, brightPx=0, darkPx=0;
+    for(let y=1;y<h-1;y+=2){
+      for(let x=1;x<w-1;x+=2){
+        const i=(y*w+x)*4;
+        const Lp=0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2];
+        const iu=((y-1)*w+x)*4, id=((y+1)*w+x)*4;
+        const Lu=0.2126*d[iu]+0.7152*d[iu+1]+0.0722*d[iu+2];
+        const Ld=0.2126*d[id]+0.7152*d[id+1]+0.0722*d[id+2];
+        if(Lp>140) brightPx++;
+        if(Lp<50) darkPx++;
+        /* 细长亮条：自身亮、上下一端暗 */
+        if(Lp>110 && (Lu<70 || Ld<70) && Math.abs(Lu-Ld)>40) streaks++;
+      }
+    }
+    const dark=L<95, bright=L>155, cold=b>=r+8;
+    const rainLike=(dark&&streaks>15)||(L<85&&streaks>8)||(streaks>40&&darkPx>brightPx);
+    if(rainLike) weather='rain';
+    else if(bright&&cold&&L>160) weather='snow';
+    else if(dark&&Bl>0.03) weather='rain';
     return {light,water,air,biome,weather,_src:'pixel'};
   }finally{URL.revokeObjectURL(url)}
 }
@@ -3279,12 +3310,18 @@ async function handlePhotoFile(f){
     try{sc=await ai(f);mode='ai';w=sc.weather||'none';toast('AI 识别完成')}
     catch(err){
       console.warn('AI API 失败，改本地图像分析',err);
-      try{sc=await analyzeImage(f);mode='pixel';toast('已用本地图像分析打分')}
-      catch(e2){console.warn(e2);sc=mockScores();mode='mock'}
+      try{sc=await analyzeImage(f);mode='pixel';w=sc.weather||'none';toast('已用本地图像分析打分')}
+      catch(e2){console.warn(e2);sc=mockScores();mode='mock';w='none'}
     }
   }else{
-    try{sc=await analyzeImage(f);mode='pixel';toast('已用本地图像分析打分')}
-    catch(e2){sc=mockScores();mode='mock'}
+    try{sc=await analyzeImage(f);mode='pixel';w=sc.weather||'none';toast('已用本地图像分析打分')}
+    catch(e2){sc=mockScores();mode='mock';w='none'}
+  }
+  /* 文件名兜底：相册里命名为雨天/雪天也能识别 */
+  if(w==='none'&&f&&f.name){
+    const n=f.name.toLowerCase();
+    if(/雨|rain|shower|storm/.test(n)) w='rain';
+    else if(/雪|snow|blizzard/.test(n)) w='snow';
   }
   finishTake(sc,mode);
   if(w&&w!=='none') setTimeout(()=>askEnv(w),900);
