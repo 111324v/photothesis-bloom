@@ -25413,27 +25413,68 @@
     const placeExtPot = (id) => {
       const grp = extPots[id];
       if (!grp || !potAnchor) return;
-      const bodyNode = grp.children.find((o) => o.isMesh) || grp.children[0];
+      grp.position.set(0, 0, 0);
+      grp.scale.set(1, 1, 1);
       grp.updateMatrixWorld(true);
-      const pb = new Box3().setFromObject(bodyNode);
-      grp.position.copy(potAnchor).sub(new Vector3((pb.min.x + pb.max.x) / 2, pb.min.y, (pb.min.z + pb.max.z) / 2));
+      /* 外部花盆原点/缩放不统一：先按内置花盆高度归一，再把底面中心对齐到 potAnchor */
+      if (potBody) {
+        potBody.updateWorldMatrix(true, true);
+        const bb = new Box3().setFromObject(potBody);
+        const targetH = Math.max(1e-4, bb.max.y - bb.min.y);
+        const pb0 = new Box3().setFromObject(grp);
+        const curH = Math.max(1e-4, pb0.max.y - pb0.min.y);
+        grp.scale.setScalar(targetH / curH);
+        grp.updateMatrixWorld(true);
+      }
+      const pb = new Box3().setFromObject(grp);
+      const curBottom = new Vector3((pb.min.x + pb.max.x) / 2, pb.min.y, (pb.min.z + pb.max.z) / 2);
+      const parent = grp.parent;
+      if (parent) {
+        parent.updateMatrixWorld(true);
+        const desiredLocal = parent.worldToLocal(potAnchor.clone());
+        const currentLocal = parent.worldToLocal(curBottom.clone());
+        grp.position.add(desiredLocal.sub(currentLocal));
+      } else {
+        grp.position.copy(potAnchor).sub(curBottom);
+      }
     };
     const applyPot = (id) => {
       if (!["terracotta", "purple", "blue", "green"].includes(id)) id = "terracotta";
       const isOrange = id === "terracotta";
-      if (potBody) potBody.visible = isOrange;
-      if (potSoil) potSoil.visible = isOrange;
+      const showBuiltIn = () => {
+        if (potBody) potBody.visible = true;
+        if (potSoil) potSoil.visible = true;
+      };
+      const hideBuiltIn = () => {
+        if (potBody) potBody.visible = false;
+        if (potSoil) potSoil.visible = false;
+      };
+      if (isOrange) {
+        showBuiltIn();
+        for (const k in extPots) if (extPots[k]) extPots[k].visible = false;
+        return;
+      }
+      hideBuiltIn();
       for (const k in extPots) if (extPots[k]) extPots[k].visible = k === id;
-      if (!isOrange && POT_GLB[id] && !extPots[id] && !extLoading[id]) {
+      if (!extPots[id] && !extLoading[id] && POT_GLB[id]) {
         extLoading[id] = true;
-        new GLTFLoader().load("app_assets/" + POT_GLB[id], (g2) => {
+        loadGLTF("app_assets/" + POT_GLB[id], (g2) => {
           const grp = g2.scene;
           extPots[id] = grp;
           grp.visible = false;
           swayPivot.add(grp);
           placeExtPot(id);
-          if (potPending === id) grp.visible = true;
-        }, void 0, (e) => console.warn(e));
+          if (potPending === id || S && S.pot === id) {
+            for (const k in extPots) if (extPots[k]) extPots[k].visible = k === id;
+            grp.visible = true;
+            hideBuiltIn();
+          }
+        }, void 0, (e) => {
+          console.warn("pot load fail", id, e);
+          extLoading[id] = false;
+          /* 加载失败：回退内置花盆，避免植物“光杆无盆” */
+          if (!extPots[id]) showBuiltIn();
+        });
       }
     };
     window.setPot3D = (id) => {
@@ -25480,7 +25521,7 @@
     if (!plantModel) return;
     const moved = Math.hypot(e.clientX - tapX, e.clientY - tapY);
     const dt = performance.now() - tapT;
-    if (moved > 10 || dt > 400) return;
+    if (moved > 18 || dt > 600) return;
     const r = canvas.getBoundingClientRect();
     ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
