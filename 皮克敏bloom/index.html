@@ -1339,7 +1339,7 @@ input[type=file]{display:none}
 
 /* ============ v490：太阳贴纸素材 + 右缘对齐 + 植物tab对齐 ============ */
 /* 太阳徽章：贴纸图 + 慢速旋转，右缘与右上状态元素右缘对齐（22px） */
-.sun-badge{position:absolute;top:96px;left:auto;right:22px;transform:none;width:58px;height:58px;border-radius:0;
+.sun-badge{position:absolute;top:66px;left:auto;right:22px;transform:none;width:58px;height:58px;border-radius:0;
   background:none!important;border:none!important;box-shadow:none!important;display:none;place-items:center;cursor:pointer;z-index:31}
 .sun-badge.on{display:grid}
 .sun-badge img{width:100%;height:100%;object-fit:contain;animation:spin 28s linear infinite;
@@ -2528,6 +2528,11 @@ html.score-sheet-open .toast{display:none!important;opacity:0!important}
 .ss-strip em{color:#7a9580!important;font-size:10px!important}
 .ss-num{font-size:76px!important}
 .ss-frame{aspect-ratio:1.05!important;max-height:38vh!important}
+
+.ss-fire{width:30px;height:30px;margin:6px 0 0 6px;flex-shrink:0;
+  filter:drop-shadow(0 2px 6px rgba(255,100,20,.35));
+  animation:ssFirePop .55s cubic-bezier(.2,1.3,.4,1) .15s both}
+@keyframes ssFirePop{from{opacity:0;transform:scale(.4) rotate(-12deg)}to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
@@ -2837,6 +2842,7 @@ html.score-sheet-open .toast{display:none!important;opacity:0!important}
     <div class="ss-shade"></div>
     <div class="ss-value">
       <span class="ss-plus">+</span><span class="ss-num" id="scTotal">0</span>
+      <img class="ss-fire" src="app_assets/fire.svg" alt="" width="30" height="30">
     </div>
     <div class="ss-tag" id="scMode">AI</div>
   </div>
