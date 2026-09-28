@@ -2880,7 +2880,7 @@ html.score-sheet-open .toast{display:none!important;opacity:0!important}
 </div></div>
 <div class="sheet" id="sheetCam"><div class="sheet-box">
   <h3>拍摄自然场景</h3>
-  <div class="muted">拍照或从相册选择自然照片，识别光合四要素；若为雨天/雪天会询问是否切换环境。</div>
+  <div class="muted">拍照或从相册选择自然照片，识别光合四要素；识别为晴天/雨天/雪天时会询问是否切换环境。</div>
   <input type="file" id="photoInputCam" accept="image/*" capture="environment" style="display:none">
   <input type="file" id="photoInputAlbum" accept="image/*" style="display:none">
   <button class="btn" style="margin-top:12px" onclick="document.getElementById('photoInputCam').click()">打开相机拍摄</button>
@@ -3572,7 +3572,7 @@ async function analyzeImage(file){
     const air=Math.min(3,Math.max(0,Math.round(Sk*6 + (L>170?1:0))));
     const biome=Math.min(3,Math.max(0,Math.round(G*10 + (1-Math.abs(r/n-90)/120))));
     /* 粗分天气：暗+高对比雨丝感→雨；大面积高亮冷白→雪；其余→晴 */
-    let weather='none';
+    let weather='sun';
     /* 雨丝：暗背景下大量局部高对比亮线 */
     let streaks=0, brightPx=0, darkPx=0;
     for(let y=1;y<h-1;y+=2){
@@ -3597,7 +3597,7 @@ async function analyzeImage(file){
   }finally{URL.revokeObjectURL(url)}
 }
 window.openCamera=()=>$('sheetCam').classList.add('on');
-window.mockTake=()=>{closeSheet();finishTake(mockScores(),'mock');const r=Math.random();setTimeout(()=>askEnv(r<.25?'rain':(r<.4?'snow':'none')),1200)};
+window.mockTake=()=>{closeSheet();finishTake(mockScores(),'mock');const r=Math.random();setTimeout(()=>askEnv(r<.25?'rain':(r<.4?'snow':'sun')),1200)};
 function scoreSparksUnused(){
   const box=$('scSpark'); if(!box)return;
   box.innerHTML='';
@@ -3666,27 +3666,29 @@ function finishTake(sc,mode,photoUrl){
 async function handlePhotoFile(f){
   if(!f)return; closeSheet(); toast('AI 识别照片中…');
   try{window.__lastPhotoURL=URL.createObjectURL(f)}catch(e){}
-  let sc,mode='pixel',w='none';
+  let sc,mode='pixel',w='sun';
   if(S.api.key&&S.api.key.length>8){
-    try{sc=await ai(f);mode='ai';w=sc.weather||'none';if(!document.documentElement.classList.contains('score-sheet-open'))toast('AI 识别完成')}
+    try{sc=await ai(f);mode='ai';w=sc.weather||'sun';if(!document.documentElement.classList.contains('score-sheet-open'))toast('AI 识别完成')}
     catch(err){
       console.warn('AI API 失败，改本地图像分析',err);
-      try{sc=await analyzeImage(f);mode='pixel';w=sc.weather||'none';if(!document.documentElement.classList.contains('score-sheet-open'))toast('已用本地图像分析打分')}
-      catch(e2){console.warn(e2);sc=mockScores();mode='mock';w='none'}
+      try{sc=await analyzeImage(f);mode='pixel';w=sc.weather||'sun';if(!document.documentElement.classList.contains('score-sheet-open'))toast('已用本地图像分析打分')}
+      catch(e2){console.warn(e2);sc=mockScores();mode='mock';w='sun'}
     }
   }else{
-    try{sc=await analyzeImage(f);mode='pixel';w=sc.weather||'none';if(!document.documentElement.classList.contains('score-sheet-open'))toast('已用本地图像分析打分')}
-    catch(e2){sc=mockScores();mode='mock';w='none'}
+    try{sc=await analyzeImage(f);mode='pixel';w=sc.weather||'sun';if(!document.documentElement.classList.contains('score-sheet-open'))toast('已用本地图像分析打分')}
+    catch(e2){sc=mockScores();mode='mock';w='sun'}
   }
-  /* 文件名兜底：相册里命名为雨天/雪天也能识别 */
-  if(w==='none'&&f&&f.name){
+  /* 文件名兜底：相册里命名为雨天/雪天/晴天也能识别 */
+  if((!w||w==='none')&&f&&f.name){
     const n=f.name.toLowerCase();
     if(/雨|rain|shower|storm/.test(n)) w='rain';
     else if(/雪|snow|blizzard/.test(n)) w='snow';
+    else if(/晴|sun|clear|sunny/.test(n)) w='sun';
   }
+  if(!w||w==='none') w='sun';
   let photoUrl=''; try{photoUrl=URL.createObjectURL(f);}catch(e){}
   finishTake(sc,mode,photoUrl);
-  if(w&&w!=='none') setTimeout(()=>askEnv(w),900);
+  setTimeout(()=>askEnv(w),900);
 }
 ['photoInputCam','photoInputAlbum','photoInput'].forEach(id=>{
   const el=document.getElementById(id); if(!el)return;
@@ -3704,7 +3706,7 @@ async function ai(file){
   const cv=document.createElement('canvas');cv.width=cw;cv.height=ch;
   cv.getContext('2d').drawImage(img,0,0,cw,ch);
   const b64=cv.toDataURL('image/jpeg',0.82).split(',')[1];
-  const prompt='你是植物养成游戏的自然照片评分器。请根据这张自然环境照片，对四个维度打整数分0-3：\n- light 光照充足度（阳光/明亮=高）\n- water 水分感（水体/湿润/露珠=高）\n- air 空气通透度（开阔/晴朗/蓝天=高）\n- biome 生态丰富度（植物多样/绿意=高）\n- weather 只能是 none|rain|snow\n只输出JSON，例如 {"light":2,"water":1,"air":3,"biome":2,"weather":"none"}';
+  const prompt='你是植物养成游戏的自然照片评分器。请根据这张自然环境照片，对四个维度打整数分0-3：\n- light 光照充足度（阳光/明亮=高）\n- water 水分感（水体/湿润/露珠=高）\n- air 空气通透度（开阔/晴朗/蓝天=高）\n- biome 生态丰富度（植物多样/绿意=高）\n- weather 只能是 sun|rain|snow（晴天/晴朗= sun，下雨= rain，下雪= snow）\n只输出JSON，例如 {"light":2,"water":1,"air":3,"biome":2,"weather":"sun"}';
   const res=await fetch(S.api.url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+S.api.key},
     body:JSON.stringify({model:S.api.model,max_tokens:120,temperature:.2,messages:[
       {role:'system',content:prompt},
@@ -3714,7 +3716,8 @@ async function ai(file){
   const t=(await res.json()).choices?.[0]?.message?.content||'';
   const o=JSON.parse((t.match(/\{[\s\S]*\}/)||['{}'])[0]);
   const c=x=>Math.min(3,Math.max(0,Math.round(+x||0)));
-  return{light:c(o.light),water:c(o.water),air:c(o.air),biome:c(o.biome),weather:o.weather||'none'};
+  const wt=o.weather==='rain'||o.weather==='snow'?o.weather:'sun';
+  return{light:c(o.light),water:c(o.water),air:c(o.air),biome:c(o.biome),weather:wt};
 }
 function renderColl(){
   const left=Math.max(0,FULL-S.total);
@@ -3929,7 +3932,7 @@ function selectPot(id){
 function closePot(){ if(potMode==='onboard') show('s-choose'); else { show('s-home'); openSub('s-collection'); } }
 /* 主页底部花盘渲染（占位 SVG，后续可替换为真实花盘 3D/贴图） */
 function renderPot(){const el=$('potLayer');if(el)el.innerHTML='';if(window.setPot3D)window.setPot3D(S.pot);}
-/* ---------- 环境系统：白天/傍晚/夜晚随真实时间；雨/雪由拍照识别，仅保留一天 ---------- */
+/* ---------- 环境系统：白天/傍晚/夜晚随真实时间；晴/雨/雪随拍照识别，仅保留一天 ---------- */
 const todayKey=()=>{const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
 function envPhase(){return 'day'; /* TEMP-FORCE-DAY — 临时固定白天，改回时删掉本行 return，恢复下面按时间判定 */
   const h=new Date().getHours()+new Date().getMinutes()/60;
@@ -3938,14 +3941,15 @@ function envWeather(){return (S.env&&S.env.date===todayKey())?S.env.type:null}
 function applyEnv(){
   const L=$('envLayer'),T=$('envTint'),F=$('envFx'); if(!L||!T||!F)return;
   const ph=envPhase(),w=envWeather();
+  const clear=!w||w==='none'||w==='sun';
   L.className='env-layer p-'+ph;
   const scr=document.getElementById('s-home');     /* 屏幕级环境类：驱动云朵/山丘等景物昼夜适配 */
   if(scr){scr.classList.toggle('env-night',ph==='night');scr.classList.toggle('env-evening',ph==='evening');scr.classList.toggle('env-rain',w==='rain')}
   renderActs();                                    /* 环境变化时重刷功能卡（夜晚晒太阳禁用） */
-  T.className='env-tint '+(!w?(ph==='evening'?'t-evening':ph==='night'?'t-night':''):'t-'+w);
+  T.className='env-tint '+(clear?(ph==='evening'?'t-evening':ph==='night'?'t-night':''):'t-'+w);
   F.className='env-fx '+(w==='rain'?'fx-rain':w==='snow'?'fx-snow':'');
   F.innerHTML='';
-  if(w){
+  if(w==='rain'||w==='snow'){
     const n=w==='rain'?46:32; let h='';
     for(let i=0;i<n;i++){
       const dur=w==='rain'?(.7+Math.random()*.5):(4+Math.random()*4);
@@ -3979,14 +3983,19 @@ function applyEnv(){
   try{if(typeof showChat==='function')showChat()}catch(e){}
 }
 function askEnv(w){
-  if(!w||w==='none'||w===envWeather())return;
+  if(!w||w==='none') w='sun';
+  const cur=envWeather();
+  const curW=(!cur||cur==='none')?'sun':cur;
+  if(w===curW)return;
   const el=$('envAsk'); if(!el)return;
   $('envAskTxt').textContent=w==='rain'
     ?'识别到这张照片是雨天，要把植物的环境换成雨天吗？'
-    :'识别到这张照片是雪天，要把植物的环境换成雪天吗？';
+    :w==='snow'
+    ?'识别到这张照片是雪天，要把植物的环境换成雪天吗？'
+    :'识别到这张照片是晴天，要把植物的环境换成晴天吗？';
   el.dataset.w=w; el.classList.add('on');
 }
-window.envYes=()=>{const el=$('envAsk');S.env={type:el.dataset.w,date:todayKey()};save();el.classList.remove('on');applyEnv();toast(el.dataset.w==='rain'?'植物环境已变为雨天':'植物环境已变为雪天')};
+window.envYes=()=>{const el=$('envAsk');S.env={type:el.dataset.w,date:todayKey()};save();el.classList.remove('on');applyEnv();toast(el.dataset.w==='rain'?'植物环境已变为雨天':el.dataset.w==='snow'?'植物环境已变为雪天':'植物环境已变为晴天')};
 window.envNo=()=>{$('envAsk').classList.remove('on');toast('已保持当前环境')};
 setInterval(applyEnv,60000);
 window.adopt=adopt;
