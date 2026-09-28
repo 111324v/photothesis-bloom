@@ -2587,16 +2587,11 @@ body.in-standalone .phone {
 </div></div>
 <div class="sheet" id="sheetCam"><div class="sheet-box">
   <h3>拍摄自然场景</h3>
-  <div class="muted">可拍照 / 选相册，或直接用下方演示图；AI 识别光、水、气、境。</div>
-  <!-- 相机：capture 会强制拉起相机 -->
+  <div class="muted">拍照或从相册选择自然照片，识别光合四要素；若为雨天/雪天会询问是否切换环境。</div>
   <input type="file" id="photoInputCam" accept="image/*" capture="environment" style="display:none">
-  <!-- 相册：不要 capture，系统才会出相册 -->
   <input type="file" id="photoInputAlbum" accept="image/*" style="display:none">
   <button class="btn" style="margin-top:12px" onclick="document.getElementById('photoInputCam').click()">打开相机拍摄</button>
   <button class="btn ghost" style="margin-top:8px" onclick="document.getElementById('photoInputAlbum').click()">从相册选择</button>
-  <div class="muted" style="margin:12px 0 6px">演示照片（点选后识别并切换天气）</div>
-  <div id="demoShots" style="display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px"></div>
-  <button class="btn ghost" style="margin-top:4px;opacity:.55" onclick="mockTake()">演示用·随机模拟</button>
   <button class="btn ghost" style="margin-top:8px" onclick="closeSheet()">取消</button>
 </div></div>
 <div class="sheet" id="sheetRem"><div class="sheet-box">
@@ -3235,7 +3230,12 @@ async function analyzeImage(file){
     const water=Math.min(3,Math.max(0,Math.round(Bl*8 + (L>150?1:0))));
     const air=Math.min(3,Math.max(0,Math.round(Sk*6 + (L>170?1:0))));
     const biome=Math.min(3,Math.max(0,Math.round(G*10 + (1-Math.abs(r/n-90)/120))));
-    return {light,water,air,biome,weather:'none',_src:'pixel'};
+    /* 粗分天气：暗+高对比雨丝感→雨；大面积高亮冷白→雪；其余→晴 */
+    let weather='none';
+    const dark=L<70, bright=L>150, cold=b>=r+10;
+    if(dark&&Bl>0.02) weather='rain';
+    else if(bright&&cold) weather='snow';
+    return {light,water,air,biome,weather,_src:'pixel'};
   }finally{URL.revokeObjectURL(url)}
 }
 window.openCamera=()=>$('sheetCam').classList.add('on');
@@ -3272,7 +3272,7 @@ async function handlePhotoFile(f){
     catch(e2){sc=mockScores();mode='mock'}
   }
   finishTake(sc,mode);
-  setTimeout(()=>askEnv(w),1200);
+  if(w&&w!=='none') setTimeout(()=>askEnv(w),900);
 }
 ['photoInputCam','photoInputAlbum','photoInput'].forEach(id=>{
   const el=document.getElementById(id); if(!el)return;
@@ -3281,65 +3281,7 @@ async function handlePhotoFile(f){
     await handlePhotoFile(f);
   });
 });
-/* 演示照片：canvas 生成，点选后按内容打分并切换雨/雪/晴 */
-const DEMO_SHOTS=[
-  {id:'sunny', name:'晴天', weather:'none', sc:{light:3,water:1,air:3,biome:2},
-   draw(c,w,h){const x=c.getContext('2d');
-     const g=x.createLinearGradient(0,0,0,h); g.addColorStop(0,'#5ec8f8'); g.addColorStop(1,'#c8f0c0'); x.fillStyle=g; x.fillRect(0,0,w,h);
-     x.fillStyle='#ffd24a'; x.beginPath(); x.arc(w*0.78,h*0.22,w*0.12,0,7); x.fill();
-     x.fillStyle='#6fcf7a'; x.fillRect(0,h*0.72,w,h*0.28);
-     for(let i=0;i<8;i++){x.fillStyle=i%2?'#4caf50':'#2f7d32'; x.fillRect((i*0.12+0.05)*w,h*0.62,w*0.04,h*0.2);}
-   }},
-  {id:'rain', name:'雨天', weather:'rain', sc:{light:1,water:3,air:1,biome:2},
-   draw(c,w,h){const x=c.getContext('2d');
-     const g=x.createLinearGradient(0,0,0,h); g.addColorStop(0,'#3a4a6a'); g.addColorStop(1,'#2a3a55'); x.fillStyle=g; x.fillRect(0,0,w,h);
-     x.fillStyle='#3d7a4a'; x.fillRect(0,h*0.7,w,h*0.3);
-     x.strokeStyle='rgba(180,210,255,0.7)'; x.lineWidth=2;
-     for(let i=0;i<40;i++){const px=Math.random()*w,py=Math.random()*h;x.beginPath();x.moveTo(px,py);x.lineTo(px-3,py+14);x.stroke();}
-   }},
-  {id:'snow', name:'雪天', weather:'snow', sc:{light:1,water:2,air:1,biome:1},
-   draw(c,w,h){const x=c.getContext('2d');
-     const g=x.createLinearGradient(0,0,0,h); g.addColorStop(0,'#6a7a9a'); g.addColorStop(1,'#c8d4e8'); x.fillStyle=g; x.fillRect(0,0,w,h);
-     x.fillStyle='#e8eef8'; x.fillRect(0,h*0.65,w,h*0.35);
-     x.fillStyle='#fff'; for(let i=0;i<60;i++){x.beginPath();x.arc(Math.random()*w,Math.random()*h,1.2+Math.random()*2,0,7);x.fill();}
-   }},
-  {id:'water', name:'水边', weather:'none', sc:{light:2,water:3,air:2,biome:2},
-   draw(c,w,h){const x=c.getContext('2d');
-     const g=x.createLinearGradient(0,0,0,h); g.addColorStop(0,'#7ec8ff'); g.addColorStop(0.55,'#4db0e0'); g.addColorStop(1,'#2a6a90'); x.fillStyle=g; x.fillRect(0,0,w,h);
-     x.fillStyle='#5ecf7a'; for(let i=0;i<5;i++)x.fillRect(i*w*0.2,h*0.55,w*0.08,h*0.2);
-   }},
-  {id:'forest', name:'林间', weather:'none', sc:{light:2,water:2,air:3,biome:3},
-   draw(c,w,h){const x=c.getContext('2d');
-     x.fillStyle='#2a4a28'; x.fillRect(0,0,w,h);
-     for(let i=0;i<10;i++){x.fillStyle=i%2?'#3d7a3a':'#2f5a28'; x.fillRect(i*w*0.1,h*0.2+(i%3)*10,w*0.08,h*0.8);}
-     x.fillStyle='#8fd3ff'; x.globalAlpha=0.35; x.fillRect(w*0.3,0,w*0.12,h*0.5); x.globalAlpha=1;
-   }},
-];
-function renderDemoShots(){
-  const box=document.getElementById('demoShots'); if(!box)return;
-  box.innerHTML=DEMO_SHOTS.map(s=>{
-    return `<button type="button" data-demo="${s.id}" style="flex:0 0 92px;border:2px solid #dfeee6;border-radius:12px;padding:6px;background:#fff;cursor:pointer">
-      <canvas id="demo_${s.id}" width="88" height="56" style="width:88px;height:56px;border-radius:8px;display:block"></canvas>
-      <div style="font-size:11px;font-weight:800;color:#1e4d2b;margin-top:4px;text-align:center">${s.name}</div>
-    </button>`;
-  }).join('');
-  DEMO_SHOTS.forEach(s=>{
-    const cv=document.getElementById('demo_'+s.id);
-    if(cv) s.draw(cv,88,56);
-  });
-  box.querySelectorAll('[data-demo]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const s=DEMO_SHOTS.find(x=>x.id===btn.getAttribute('data-demo'));
-      if(!s)return;
-      closeSheet();
-      const sc={...s.sc};
-      finishTake(sc,'demo');
-      toast('演示图「'+s.name+'」· 环境：'+(s.weather==='rain'?'雨天':s.weather==='snow'?'雪天':'正常'));
-      setTimeout(()=>askEnv(s.weather),800);
-    });
-  });
-}
-renderDemoShots();
+
 async function ai(file){
   /* 压到 ≤720px，降低流量并提高识别稳定性 */
   const img=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=fr.result};fr.onerror=rej;fr.readAsDataURL(file)});
@@ -3625,8 +3567,8 @@ function askEnv(w){
   if(!w||w==='none'||w===envWeather())return;
   const el=$('envAsk'); if(!el)return;
   $('envAskTxt').textContent=w==='rain'
-    ?'看起来您这边是下雨了，需要将植物的生长环境也变为雨天吗？'
-    :'看起来您那边下雪了，需要将植物的生长环境也变为雪天吗？';
+    ?'识别到这张照片是雨天，要把植物的环境换成雨天吗？'
+    :'识别到这张照片是雪天，要把植物的环境换成雪天吗？';
   el.dataset.w=w; el.classList.add('on');
 }
 window.envYes=()=>{const el=$('envAsk');S.env={type:el.dataset.w,date:todayKey()};save();el.classList.remove('on');applyEnv();toast(el.dataset.w==='rain'?'植物环境已变为雨天':'植物环境已变为雪天')};
