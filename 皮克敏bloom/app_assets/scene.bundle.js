@@ -25366,6 +25366,7 @@
   var plantW = 1;
   var plantModel = null;
   var swayPivot = null;
+  var hitPotBodies = [];   /* 可点击花盆（内置+外部），供 pointerup 命中 */
   var swayT = -1;
   var swayAmp = 0.075;
   var GROW_FROM = 0.08;
@@ -25406,17 +25407,41 @@
     let potAnchor = null;
     const potPending = typeof S !== "undefined" && S && S.pot || "terracotta";
     const potAnchorCalc = () => {
-      if (!potBody) return;
-      const pb = new Box3().setFromObject(potBody);
-      potAnchor = new Vector3((pb.min.x + pb.max.x) / 2, pb.min.y, (pb.min.z + pb.max.z) / 2);
+      /* 锚点取「泥土中心」≈ 植物根部，而不是盆底 */
+      const ref = potSoil || potBody;
+      if (!ref) return;
+      ref.updateWorldMatrix(true, true);
+      const pb = new Box3().setFromObject(ref);
+      potAnchor = new Vector3((pb.min.x + pb.max.x) / 2, (pb.min.y + pb.max.y) / 2, (pb.min.z + pb.max.z) / 2);
     };
     const placeExtPot = (id) => {
       const grp = extPots[id];
       if (!grp || !potAnchor) return;
-      const bodyNode = grp.children.find((o) => o.isMesh) || grp.children[0];
-      grp.updateMatrixWorld(true);
-      const pb = new Box3().setFromObject(bodyNode);
-      grp.position.copy(potAnchor).sub(new Vector3((pb.min.x + pb.max.x) / 2, pb.min.y, (pb.min.z + pb.max.z) / 2));
+      grp.position.set(0, 0, 0);
+      grp.updateWorldMatrix(true, true);
+      /* 找外部盆里的泥土层；找不到就用整组 */
+      let extSoil = null;
+      grp.traverse((o) => {
+        if (extSoil) return;
+        const n = (o && o.name) || "";
+        if (n.indexOf("泥土") >= 0 || n.indexOf("Soil") >= 0 || n.indexOf("soil") >= 0) extSoil = o;
+      });
+      const extRef = extSoil || grp;
+      extRef.updateWorldMatrix(true, true);
+      const pb = new Box3().setFromObject(extRef);
+      const extCenter = new Vector3((pb.min.x + pb.max.x) / 2, (pb.min.y + pb.max.y) / 2, (pb.min.z + pb.max.z) / 2);
+      /* 把外部盆泥土中心移到 potAnchor（植物根）：必须转到父节点局部坐标 */
+      const parent = grp.parent;
+      if (parent) {
+        parent.updateWorldMatrix(true, true);
+        const inv = new Matrix4().copy(parent.matrixWorld).invert();
+        const refLocal = potAnchor.clone().applyMatrix4(inv);
+        const extLocal = extCenter.clone().applyMatrix4(inv);
+        grp.position.add(refLocal.sub(extLocal));
+      } else {
+        grp.position.add(potAnchor.clone().sub(extCenter));
+      }
+      grp.updateWorldMatrix(true, true);
     };
     const applyPot = (id) => {
       if (!["terracotta", "purple", "blue", "green"].includes(id)) id = "terracotta";
@@ -25424,6 +25449,10 @@
       if (potBody) potBody.visible = isOrange;
       if (potSoil) potSoil.visible = isOrange;
       for (const k in extPots) if (extPots[k]) extPots[k].visible = k === id;
+      /* 刷新可点击花盆列表 */
+      hitPotBodies.length = 0;
+      if (isOrange && potBody) hitPotBodies.push(potBody);
+      for (const k in extPots) if (extPots[k] && extPots[k].visible) hitPotBodies.push(extPots[k]);
       if (!isOrange && POT_GLB[id] && !extPots[id] && !extLoading[id]) {
         extLoading[id] = true;
         loadGLTF("app_assets/" + POT_GLB[id], (g2) => {
@@ -25432,7 +25461,13 @@
           grp.visible = false;
           swayPivot.add(grp);
           placeExtPot(id);
-          if (potPending === id) grp.visible = true;
+          if (potPending === id) {
+            grp.visible = true;
+            if (potBody) potBody.visible = false;
+            if (potSoil) potSoil.visible = false;
+            hitPotBodies.length = 0;
+            hitPotBodies.push(grp);
+          }
         }, void 0, (e) => console.warn(e));
       }
     };
@@ -25489,7 +25524,15 @@
     const r = canvas.getBoundingClientRect();
     ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    if (ray.intersectObject(plantModel, true).length) {
+    if (plantModel) plantModel.updateWorldMatrix(true, true);
+    let hit = !!(plantModel && ray.intersectObject(plantModel, true).length);
+    if (!hit) {
+      for (let i = 0; i < hitPotBodies.length; i++) {
+        const o = hitPotBodies[i];
+        if (o && ray.intersectObject(o, true).length) { hit = true; break; }
+      }
+    }
+    if (hit) {
       startSway();
       showTapHand(e.clientX, e.clientY);
     }
