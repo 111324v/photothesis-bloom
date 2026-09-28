@@ -2490,13 +2490,13 @@ body.in-standalone .phone {
   background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(8,22,14,.55) 100%);
 }
 .ss-value{
-  position:absolute;left:20px;bottom:16px;display:flex;align-items:flex-start;gap:2px;color:#fff;
+  position:absolute;left:18px;right:18px;bottom:14px;display:flex;align-items:flex-start;gap:2px;color:#fff;
   animation:ssIn .5s cubic-bezier(.2,1.2,.4,1) both;
 }
 .ss-plus{font-family:var(--font-disp);font-size:26px;font-weight:900;line-height:1;margin-top:10px}
 .ss-num{font-family:var(--font-disp);font-size:72px;font-weight:900;line-height:.88;letter-spacing:-2px;
   text-shadow:0 8px 24px rgba(0,0,0,.35)}
-.ss-tag{
+.ss-tag{opacity:.85;
   position:absolute;right:14px;top:14px;padding:5px 10px;border-radius:999px;
   font-size:11px;font-weight:800;letter-spacing:.4px;
   background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.35);
@@ -2519,6 +2519,15 @@ body.in-standalone .phone {
   font-size:16px!important;font-weight:900!important;
 }
 .ss-cta:active{transform:scale(.98)}
+
+/* v694：结算弹窗打开时隐藏调试层；四要素弱化 */
+html.score-sheet-open .fs-entry,
+html.score-sheet-open .toast{display:none!important;opacity:0!important}
+.ss-strip{background:#f6f8f3!important}
+.ss-strip b{font-size:18px!important;color:#2a4a32!important}
+.ss-strip em{color:#7a9580!important;font-size:10px!important}
+.ss-num{font-size:76px!important}
+.ss-frame{aspect-ratio:1.05!important;max-height:38vh!important}
 </style>
 </head>
 <body>
@@ -2966,7 +2975,9 @@ const DAILY_BONUS_CAP=12;
 function load(){
   try{const s=JSON.parse(localStorage.getItem(KEY)||'null');
     if(s&&s.species){
-      if(!Array.isArray(s.homeActs))s.homeActs=['sun','water','walk'];
+      if(!Array.isArray(s.homeActs))s.homeActs=['sun','water','walk','breathe'];
+      /* 旧存档迁移：补回默认「深呼吸」快捷卡 */
+      if(!s.homeActs.includes('breathe')&&s.homeActs.length<6)s.homeActs.push('breathe');
       if(s.homeActs.length>6)s.homeActs=s.homeActs.slice(0,6);   /* 兜底：最多 6 张 */
       if(!Array.isArray(s.customActs))s.customActs=[];
       /* 多植物迁移：旧存档只有单植物 species/pot/total，包装成 plants[0] */
@@ -2997,7 +3008,7 @@ function load(){
       {kind:'photo',source:'plant',hh:19,mm:30,repeat:'daily',enabled:true,voice:'再拍一张今天的自然'},
       {kind:'rest',source:'plant',hh:21,mm:30,repeat:'daily',enabled:true,voice:'早点睡，明天一起晒太阳'},
     ],
-    homeActs:['sun','water','walk'],
+    homeActs:['sun','water','walk','breathe'],
     customActs:[],
   };
 }
@@ -3350,7 +3361,7 @@ window.runAct=id=>{
   else{runCustomAct(id)}
 };
 const HOME_ACT_LIMIT=6;                      /* 首页快捷卡最多 6 张 */
-const DEFAULT_ACTS=['sun','water','walk'];   /* 默认提供的三个功能 */
+const DEFAULT_ACTS=['sun','water','walk','breathe'];   /* 默认提供的四个功能：含深呼吸引导 */
 function renderHomeActs(){
   const el=$('homeActList');if(!el)return;
   if($('actCap'))$('actCap').textContent=`已选 ${S.homeActs.length} / ${HOME_ACT_LIMIT}`;
@@ -3575,6 +3586,12 @@ function scoreSparksUnused(){
     box.appendChild(s);
   }
 }
+function setStripVal(id,v){
+  const el=$(id); if(!el)return;
+  el.textContent=v;
+  el.style.opacity=v>=3?'1':v===2?'.78':v===1?'.55':'.35';
+  el.style.transform=v>=3?'scale(1.12)':v===2?'scale(1)':'scale(.92)';
+}
 function finishTake(sc,mode,photoUrl){
   try{
     document.documentElement.classList.add('score-sheet-open');
@@ -3594,7 +3611,7 @@ function finishTake(sc,mode,photoUrl){
   SP.forEach(sp=>{if(sp.unlock<=lv&&!S.unlocked.includes(sp.id))S.unlocked.push(sp.id)});
   if(S.total>=FULL&&!S.mature){S.mature=1;S.xp+=20}
   save();
-  $('scL').textContent=sc.light;$('scW').textContent=sc.water;$('scA').textContent=sc.air;$('scB').textContent=sc.biome;
+  setStripVal('scL',sc.light);setStripVal('scW',sc.water);setStripVal('scA',sc.air);setStripVal('scB',sc.biome);
   const setBar=(id,v)=>{const el=$(id); if(el){const w=Math.min(100,Math.max(8,(v/3)*100)); el.style.width=w+'%'; el.style.flex='0 0 '+w+'%';}};
   setBar('scLb',sc.light);setBar('scWb',sc.water);setBar('scAb',sc.air);setBar('scBb',sc.biome);
   $('scMode').textContent=mode==='ai'?'AI 识别':mode==='pixel'?'图像分析':'演示';
@@ -3626,14 +3643,14 @@ async function handlePhotoFile(f){
   try{window.__lastPhotoURL=URL.createObjectURL(f)}catch(e){}
   let sc,mode='pixel',w='none';
   if(S.api.key&&S.api.key.length>8){
-    try{sc=await ai(f);mode='ai';w=sc.weather||'none';toast('AI 识别完成')}
+    try{sc=await ai(f);mode='ai';w=sc.weather||'none';if(!document.documentElement.classList.contains('score-sheet-open'))toast('AI 识别完成')}
     catch(err){
       console.warn('AI API 失败，改本地图像分析',err);
-      try{sc=await analyzeImage(f);mode='pixel';w=sc.weather||'none';toast('已用本地图像分析打分')}
+      try{sc=await analyzeImage(f);mode='pixel';w=sc.weather||'none';if(!document.documentElement.classList.contains('score-sheet-open'))toast('已用本地图像分析打分')}
       catch(e2){console.warn(e2);sc=mockScores();mode='mock';w='none'}
     }
   }else{
-    try{sc=await analyzeImage(f);mode='pixel';w=sc.weather||'none';toast('已用本地图像分析打分')}
+    try{sc=await analyzeImage(f);mode='pixel';w=sc.weather||'none';if(!document.documentElement.classList.contains('score-sheet-open'))toast('已用本地图像分析打分')}
     catch(e2){sc=mockScores();mode='mock';w='none'}
   }
   /* 文件名兜底：相册里命名为雨天/雪天也能识别 */

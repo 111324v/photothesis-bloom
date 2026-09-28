@@ -25407,7 +25407,6 @@
     const potPending = typeof S !== "undefined" && S && S.pot || "terracotta";
     const potAnchorCalc = () => {
       if (!potBody) return;
-      potBody.updateWorldMatrix(true, true);
       const pb = new Box3().setFromObject(potBody);
       potAnchor = new Vector3((pb.min.x + pb.max.x) / 2, pb.min.y, (pb.min.z + pb.max.z) / 2);
     };
@@ -25415,12 +25414,9 @@
       const grp = extPots[id];
       if (!grp || !potAnchor) return;
       const bodyNode = grp.children.find((o) => o.isMesh) || grp.children[0];
-      grp.position.set(0, 0, 0);
       grp.updateMatrixWorld(true);
       const pb = new Box3().setFromObject(bodyNode);
-      const local = potAnchor.clone();
-      if (typeof swayPivot !== "undefined" && swayPivot) local.sub(swayPivot.position);
-      grp.position.copy(local).sub(new Vector3((pb.min.x + pb.max.x) / 2, pb.min.y, (pb.min.z + pb.max.z) / 2));
+      grp.position.copy(potAnchor).sub(new Vector3((pb.min.x + pb.max.x) / 2, pb.min.y, (pb.min.z + pb.max.z) / 2));
     };
     const applyPot = (id) => {
       if (!["terracotta", "purple", "blue", "green"].includes(id)) id = "terracotta";
@@ -25430,7 +25426,7 @@
       for (const k in extPots) if (extPots[k]) extPots[k].visible = k === id;
       if (!isOrange && POT_GLB[id] && !extPots[id] && !extLoading[id]) {
         extLoading[id] = true;
-        loadGLTF("app_assets/" + POT_GLB[id], (g2) => {
+        new GLTFLoader().load("app_assets/" + POT_GLB[id], (g2) => {
           const grp = g2.scene;
           extPots[id] = grp;
           grp.visible = false;
