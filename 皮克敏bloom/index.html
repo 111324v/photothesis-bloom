@@ -380,17 +380,17 @@ body.in-standalone .status{display:none!important}
 .plant-glow{position:absolute;left:50%;bottom:100px;width:260px;height:150px;transform:translateX(-50%);z-index:9;pointer-events:none;opacity:0;transition:opacity .8s ease;
   background:radial-gradient(ellipse at center,rgba(180,215,255,.34) 0%,rgba(120,170,240,.16) 40%,transparent 72%)}
 #s-home.env-night .plant-glow{opacity:1}
-/* 点击植物时出现的半透明手指（占位素材，后续可替换为真实 PNG 序列） */
-.tap-hand{position:fixed;left:50%;top:50%;width:104px;height:106px;z-index:60;pointer-events:none;opacity:0;
-  transform:translate(-50%,-50%);filter:drop-shadow(0 6px 12px rgba(0,0,0,.18))}
-.tap-hand svg{width:100%;height:100%;display:block}
+/* 点击植物/花盆：在点击位置出现手势素材 app_assets/手势.svg */
+.tap-hand{position:absolute;left:0;top:0;width:112px;height:114px;z-index:80;pointer-events:none;opacity:0;
+  transform:translate(-50%,-55%);will-change:transform,opacity}
+.tap-hand img,.tap-hand svg{width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none}
 .tap-hand.show{animation:tapHandAnim 900ms ease forwards}
 @keyframes tapHandAnim{
-  0%{transform:translate(-50%,-46%) scale(.62);opacity:0}
-  16%{transform:translate(-50%,-50%) scale(1);opacity:.96}
-  52%{transform:translate(-50%,-41%) scale(.9);opacity:.96}
-  78%{transform:translate(-50%,-50%) scale(1);opacity:.9}
-  100%{transform:translate(-50%,-60%) scale(.9);opacity:0}
+  0%{transform:translate(-50%,-50%) scale(.55);opacity:0}
+  14%{transform:translate(-50%,-58%) scale(1.08);opacity:1}
+  46%{transform:translate(-50%,-48%) scale(1);opacity:1}
+  78%{transform:translate(-50%,-56%) scale(1);opacity:.95}
+  100%{transform:translate(-50%,-66%) scale(.92);opacity:0}
 }
 
 /* 浇水动画已改为 3D 水壶模型（three.js 场景内） */
@@ -2646,9 +2646,9 @@ html.score-sheet-open .toast{display:none!important;opacity:0!important}
       <div class="br-tip"><b id="brWord">吸气</b><span id="brCount">第 1 / 3 次</span></div>
       <button class="br-stop" onclick="stopBreathe()">结束</button>
     </div>
-    <div class="tap-hand" id="tapHand"><svg viewBox="0 0 338 346" fill="none">
-      <path d="M78.432 108.3C82.5654 104.696 87.9609 102.882 93.4316 103.257C98.8483 103.628 103.898 106.116 107.496 110.177L129.222 131.383C129.658 129.799 130.283 128.263 131.091 126.811C133.251 122.93 136.603 119.848 140.651 118.021C144.699 116.193 149.228 115.717 153.567 116.664C156.022 117.2 158.342 118.176 160.423 119.528C160.86 117.87 161.505 116.264 162.348 114.747C164.508 110.867 167.86 107.784 171.908 105.956C175.956 104.129 180.485 103.654 184.824 104.6C189.163 105.547 193.082 107.866 196.001 111.213L198.606 114.202C199.505 110.178 201.555 106.664 205.086 103.909L205.69 103.455L205.693 103.453C209.131 100.978 214.356 99.8219 219.267 100.2C224.231 100.583 229.702 102.609 232.986 107.488L233.033 107.56L271.373 167.718L271.604 168.081L271.741 168.489C279.148 190.625 270.024 218.415 248.218 237.425C226.651 256.228 198.269 261.568 177.409 251.663L122.025 249.542L121.976 249.54C119.237 249.397 116.553 248.711 114.081 247.52C111.609 246.329 109.399 244.658 107.579 242.605C105.759 240.552 104.366 238.157 103.482 235.56C102.597 232.963 102.237 230.216 102.424 227.479C102.612 224.741 103.343 222.069 104.573 219.617C105.804 217.165 107.511 214.982 109.593 213.196C111.676 211.41 114.093 210.056 116.704 209.213C119.297 208.377 122.03 208.062 124.745 208.285L124.746 208.284L142.976 209.538L76.5002 137.547L76.4668 137.51L76.434 137.473C72.8304 133.339 71.0158 127.943 71.3905 122.472C71.7652 117.001 74.2985 111.903 78.432 108.3Z" fill="white" fill-opacity="0.44" stroke="white" stroke-width="7"/>
-    </svg></div>
+    <div class="tap-hand" id="tapHand" aria-hidden="true">
+      <img src="app_assets/手势.svg" alt="" draggable="false">
+    </div>
     <div class="sun-badge" id="sunBadge" onclick="openSub('s-sync')">
       <div class="sun-face"><img src="app_assets/sun_sticker.png" alt="晒太阳"></div>
       <div class="sun-rays"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>

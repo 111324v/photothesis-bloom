@@ -25540,8 +25540,11 @@
   function showTapHand(x, y) {
     const h = document.getElementById("tapHand");
     if (!h) return;
-    h.style.left = x + "px";
-    h.style.top = y + "px";
+    /* tap-hand 在手机框内 absolute：把视口坐标换算成框内坐标 */
+    const host = h.offsetParent || document.querySelector(".phone") || document.getElementById("s-home") || document.body;
+    const r = host.getBoundingClientRect();
+    h.style.left = (x - r.left) + "px";
+    h.style.top = (y - r.top) + "px";
     h.classList.remove("show");
     void h.offsetWidth;
     h.classList.add("show");
