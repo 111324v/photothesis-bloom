@@ -3257,7 +3257,7 @@ function finishTake(sc,mode){
   refresh();
   if(S.total>=FULL&&!S.reward)setTimeout(()=>{closeSheet();$('sheetReward').classList.add('on')},700);
 }
-$('async function handlePhotoFile(f){
+async function handlePhotoFile(f){
   if(!f)return; closeSheet(); toast('AI 识别照片中…');
   let sc,mode='pixel',w='none';
   if(S.api.key&&S.api.key.length>8){
