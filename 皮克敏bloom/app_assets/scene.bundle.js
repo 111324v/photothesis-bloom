@@ -25484,13 +25484,21 @@
     const r = canvas.getBoundingClientRect();
     ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    if (ray.intersectObject(plantModel, true).length) {
+    const hitsPlant = ray.intersectObject(plantModel, true).length > 0;
+    let hitsPot = !!(potBody && potBody.visible && ray.intersectObject(potBody, true).length);
+    if (!hitsPot) {
+      for (const k in extPots) {
+        const g = extPots[k];
+        if (g && g.visible && ray.intersectObject(g, true).length) { hitsPot = true; break; }
+      }
+    }
+    if (hitsPlant || hitsPot) {
       startSway();
       showTapHand(e.clientX, e.clientY);
     }
   });
   function showTapHand(x, y) {
-    const h = $("tapHand");
+    const h = document.getElementById("tapHand");
     if (!h) return;
     h.style.left = x + "px";
     h.style.top = y + "px";
