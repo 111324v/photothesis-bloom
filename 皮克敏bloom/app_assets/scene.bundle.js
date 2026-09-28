@@ -25620,7 +25620,7 @@
       if (y < y0) y0 = y;
       if (y > y1) y1 = y;
     }
-    return { w: x1 - x0, h: y1 - y0, cw: w, ch: h };
+    return { w: x1 - x0, h: y1 - y0, cw: w, ch: h, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, x0, y0, x1, y1 };
   };
   var canGroup = new Group();
   canGroup.visible = false;

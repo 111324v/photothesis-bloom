@@ -727,8 +727,9 @@ body.in-standalone .status{display:none!important}
 .breathe{position:absolute;inset:0;z-index:var(--z-hud);pointer-events:none;opacity:0;transition:opacity .5s ease;
   display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:118px 0 190px}
 .breathe.on{opacity:1}
-.breathe .br-ring{position:absolute;border-radius:var(--r-round);border:2px solid rgba(255,255,255,.85);
-  box-shadow:0 0 22px rgba(255,255,255,.55),inset 0 0 18px rgba(255,255,255,.35);will-change:transform,opacity}
+.breathe .br-ring{position:absolute;left:50%;top:46%;border-radius:var(--r-round);border:2px solid rgba(255,255,255,.85);
+  box-shadow:0 0 22px rgba(255,255,255,.55),inset 0 0 18px rgba(255,255,255,.35);will-change:transform,opacity;
+  transform:translate(-50%,-50%)}
 .breathe .br-ring.r1{background:radial-gradient(circle,rgba(255,255,255,.06),rgba(255,255,255,.16))}
 .breathe .br-ring.r2,.breathe .br-ring.r3{background:none;border-color:rgba(255,255,255,.5)}
 .breathe .br-tip{text-align:center;transform:translateY(-6px);transition:transform .6s ease}
@@ -3237,7 +3238,19 @@ function breathe(){
   const ps=plantScreenSize();
   const base=(ps&&ps.w)?ps.w*1.22:220;
   brBase=Math.max(180,Math.min(base,(ps&&ps.cw?ps.cw:430)*.78));
-  brRings.forEach(r=>{r.style.width=brBase+'px';r.style.height=brBase+'px'});
+  /* 光环中心对齐植株（略偏泥土/叶片，不被花盆底往下拽） */
+  let cx=(ps&&ps.cw)?ps.cw*0.5:215;
+  let cy=(ps&&ps.ch)?ps.ch*0.46:360;
+  if(ps&&ps.y0!=null&&ps.y1!=null)cy=ps.y0+(ps.y1-ps.y0)*0.46;
+  else if(ps&&ps.cy!=null)cy=ps.cy;
+  if(ps&&ps.cx!=null)cx=ps.cx;
+  brRings.forEach(r=>{
+    r.style.width=brBase+'px';
+    r.style.height=brBase+'px';
+    r.style.left=cx+'px';
+    r.style.top=cy+'px';
+    r.style.transform='translate(-50%,-50%)';
+  });
   brT=0;
 }
 function endBreathe(finished){
@@ -3275,7 +3288,7 @@ function updateBreathe(dt){
   const op=.35+k*.5;
   brRings.forEach((r,i)=>{
     const s=scale+i*.09;                             // 三层错开，形成扩散涟漪
-    r.style.transform=`scale(${s.toFixed(3)})`;
+    r.style.transform=`translate(-50%,-50%) scale(${s.toFixed(3)})`;
     r.style.opacity=(op-i*.16).toFixed(3);
   });
   const word=$('brWord'), cnt=$('brCount');
