@@ -25545,8 +25545,8 @@
     }
     const f = 1.1;
     const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, hw = (x1 - x0) / 2 * f, hh = (y1 - y0) / 2 * f;
-    let by = cy - hh + 24;
-    by = Math.min(Math.max(by, 64), h - 40);
+    let by = cy - hh + 24 - 30;
+    by = Math.min(Math.max(by, 34), h - 40);
     sunEl.style.left = "auto";
     sunEl.style.right = "22px";
     sunEl.style.top = by + "px";
