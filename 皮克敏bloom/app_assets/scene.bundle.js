@@ -25413,50 +25413,18 @@
     const placeExtPot = (id) => {
       const grp = extPots[id];
       if (!grp || !potAnchor) return;
-      grp.position.set(0, 0, 0);
-      grp.scale.set(1, 1, 1);
+      const bodyNode = grp.children.find((o) => o.isMesh) || grp.children[0];
       grp.updateMatrixWorld(true);
-      /* 外部花盆原点/缩放不统一：先按内置花盆高度归一，再把底面中心对齐到 potAnchor */
-      if (potBody) {
-        potBody.updateWorldMatrix(true, true);
-        const bb = new Box3().setFromObject(potBody);
-        const targetH = Math.max(1e-4, bb.max.y - bb.min.y);
-        const pb0 = new Box3().setFromObject(grp);
-        const curH = Math.max(1e-4, pb0.max.y - pb0.min.y);
-        grp.scale.setScalar(targetH / curH);
-        grp.updateMatrixWorld(true);
-      }
-      const pb = new Box3().setFromObject(grp);
-      const curBottom = new Vector3((pb.min.x + pb.max.x) / 2, pb.min.y, (pb.min.z + pb.max.z) / 2);
-      const parent = grp.parent;
-      if (parent) {
-        parent.updateMatrixWorld(true);
-        const desiredLocal = parent.worldToLocal(potAnchor.clone());
-        const currentLocal = parent.worldToLocal(curBottom.clone());
-        grp.position.add(desiredLocal.sub(currentLocal));
-      } else {
-        grp.position.copy(potAnchor).sub(curBottom);
-      }
+      const pb = new Box3().setFromObject(bodyNode);
+      grp.position.copy(potAnchor).sub(new Vector3((pb.min.x + pb.max.x) / 2, pb.min.y, (pb.min.z + pb.max.z) / 2));
     };
     const applyPot = (id) => {
       if (!["terracotta", "purple", "blue", "green"].includes(id)) id = "terracotta";
       const isOrange = id === "terracotta";
-      const showBuiltIn = () => {
-        if (potBody) potBody.visible = true;
-        if (potSoil) potSoil.visible = true;
-      };
-      const hideBuiltIn = () => {
-        if (potBody) potBody.visible = false;
-        if (potSoil) potSoil.visible = false;
-      };
-      if (isOrange) {
-        showBuiltIn();
-        for (const k in extPots) if (extPots[k]) extPots[k].visible = false;
-        return;
-      }
-      hideBuiltIn();
+      if (potBody) potBody.visible = isOrange;
+      if (potSoil) potSoil.visible = isOrange;
       for (const k in extPots) if (extPots[k]) extPots[k].visible = k === id;
-      if (!extPots[id] && !extLoading[id] && POT_GLB[id]) {
+      if (!isOrange && POT_GLB[id] && !extPots[id] && !extLoading[id]) {
         extLoading[id] = true;
         loadGLTF("app_assets/" + POT_GLB[id], (g2) => {
           const grp = g2.scene;
@@ -25464,17 +25432,8 @@
           grp.visible = false;
           swayPivot.add(grp);
           placeExtPot(id);
-          if (potPending === id || S && S.pot === id) {
-            for (const k in extPots) if (extPots[k]) extPots[k].visible = k === id;
-            grp.visible = true;
-            hideBuiltIn();
-          }
-        }, void 0, (e) => {
-          console.warn("pot load fail", id, e);
-          extLoading[id] = false;
-          /* 加载失败：回退内置花盆，避免植物“光杆无盆” */
-          if (!extPots[id]) showBuiltIn();
-        });
+          if (potPending === id) grp.visible = true;
+        }, void 0, (e) => console.warn(e));
       }
     };
     window.setPot3D = (id) => {
@@ -25491,6 +25450,11 @@
     potAnchorCalc();
     for (const k in POT_GLB) applyPot(k);
     applyPot(potPending);
+    /* 兜底：内置花盆始终参与坐标系；外部盆未就绪时先露出内置盆，避免植物悬空 */
+    if (potBody && potPending === "terracotta") {
+      potBody.visible = true;
+      if (potSoil) potSoil.visible = true;
+    }
     plantH = Math.max(s.y, 0.2);
     plantW = Math.max(s.x, 0.2);
     const rad = Math.max(s.y, s.x, s.z, 0.4) * 0.5;
@@ -25525,15 +25489,7 @@
     const r = canvas.getBoundingClientRect();
     ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    const hitsPlant = ray.intersectObject(plantModel, true).length > 0;
-    let hitsPot = !!(potBody && potBody.visible && ray.intersectObject(potBody, true).length);
-    if (!hitsPot) {
-      for (const k in extPots) {
-        const g = extPots[k];
-        if (g && g.visible && ray.intersectObject(g, true).length) { hitsPot = true; break; }
-      }
-    }
-    if (hitsPlant || hitsPot) {
+    if (ray.intersectObject(plantModel, true).length) {
       startSway();
       showTapHand(e.clientX, e.clientY);
     }
